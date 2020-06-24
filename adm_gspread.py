@@ -1,5 +1,7 @@
 import gspread
 import pprint
+import csv
+
 
 gc = gspread.oauth()
 sh = gc.open_by_key('1QE6fZP7YsLY1RRVS9HG6ru1O7sC63LEWxaBjDJXkvUg')
@@ -58,10 +60,14 @@ def find_all_missing_data(list_of_dicts_in):
     ret_val = [i for n, i in enumerate(missing_val_list) if i not in missing_val_list[n + 1:]]
     return ret_val
 
-
 pprint.pp(find_all_missing_data(list_of_dicts))
 
-
+toCSV =find_all_missing_data(list_of_dicts)
+keys = toCSV[0].keys()
+with open('isaac_testing.csv', 'w') as output_file:
+    dict_writer = csv.DictWriter(output_file, keys)
+    dict_writer.writeheader()
+    dict_writer.writerows(toCSV)
 
 
 
