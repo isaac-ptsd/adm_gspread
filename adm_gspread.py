@@ -16,11 +16,16 @@ list_of_lists = worksheet.get_all_values()  # all data in the spreadsheet saved 
 #     cell_list[i].value = val
 # worksheet.update_cells(cell_list)
 
-def find_missing_ssid():
+def find_missing_ssid(list_in):
     """ Function to find students with missing SSID's
+        Parameter:
+            list_in; this function operates on a list
         Returns: list
             list of worksheet rows; one row of complete ADM data for each record missing an SSID
     """
-    return list(filter(lambda missing: missing['ChkDigitStdntID'] == '', list_of_dicts))
+
+    return list(filter(lambda missing: missing['ChkDigitStdntID'] == '', list_in))
+
+
 
 
