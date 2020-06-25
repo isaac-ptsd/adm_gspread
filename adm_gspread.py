@@ -67,17 +67,24 @@ def to_csv(list_of_dicts_in, name_of_csv_to_create):
     Returns: no return value
         will create a csv file in current directory
     """
-    list_to_csv = find_all_missing_data(list_of_dicts_in)
-    keys = list_to_csv[0].keys()
+    keys = list_of_dicts_in[0].keys()
     with open(name_of_csv_to_create, 'w') as output_file:
         dict_writer = csv.DictWriter(output_file, keys)
         dict_writer.writeheader()
-        dict_writer.writerows(list_to_csv)
+        dict_writer.writerows(list_of_dicts_in)
 
 
-missing_data = find_all_missing_data(list_of_dicts)
-to_csv(missing_data, "isaac_test.csv")
+def find_attendance_anomalies(list_of_dicts_in):
+    ret_val = []
+    for x in list_of_dicts_in:
+        if x['ADMSessDays'] != ((x['ADMPrsntDays'] + x['ADMAbsntDays'])/10):
+            ret_val.append(x)
+    return ret_val
 
+
+attendance_anomalies = find_attendance_anomalies(list_of_dicts)
+to_csv(attendance_anomalies, "att_anom.csv")
+pprint.pp(attendance_anomalies)
 
 
 
