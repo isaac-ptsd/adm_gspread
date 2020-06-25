@@ -4,7 +4,8 @@ import csv
 
 
 gc = gspread.oauth()
-sh = gc.open_by_key('1QE6fZP7YsLY1RRVS9HG6ru1O7sC63LEWxaBjDJXkvUg')
+# sh = gc.open_by_key('1QE6fZP7YsLY1RRVS9HG6ru1O7sC63LEWxaBjDJXkvUg')  # small sample sheet
+sh = gc.open_by_key('1cek2uerqbb1Der0jPL-VV_YlDCBRXFjNsr5I6rsyWCQ')  # full copy of comb_adm
 worksheet = sh.sheet1
 
 list_of_dicts = worksheet.get_all_records()  # all data in the spreadsheet saved as a list of dictionaries
@@ -67,17 +68,29 @@ def to_csv(list_of_dicts_in, name_of_csv_to_create):
     Returns: no return value
         will create a csv file in current directory
     """
-    list_to_csv = find_all_missing_data(list_of_dicts_in)
-    keys = list_to_csv[0].keys()
-    with open(name_of_csv_to_create, 'w') as output_file:
+    keys = list_of_dicts_in[0].keys()
+    with open(name_of_csv_to_create, 'w', newline='') as output_file:
         dict_writer = csv.DictWriter(output_file, keys)
         dict_writer.writeheader()
-        dict_writer.writerows(list_to_csv)
+        dict_writer.writerows(list_of_dicts_in)
 
 
-missing_data = find_all_missing_data(list_of_dicts)
-to_csv(missing_data, "isaac_test.csv")
+def find_attendance_anomalies(list_of_dicts_in):
+    """
+    Function that will find and return ADM attendance data that does not add up correctly
+    :param list_of_dicts_in:
+    :return: list of dictionaries with each record that has attendance data that does not add up
+    """
+    ret_val = []
+    for x in list_of_dicts_in:
+        if x['ADMSessDays'] != ((x['ADMPrsntDays'] + x['ADMAbsntDays'])/10):
+            ret_val.append(x)
+    return ret_val
 
+
+attendance_anomalies = find_attendance_anomalies(list_of_dicts)
+to_csv(attendance_anomalies, "attendance_anomalies.csv")
+pprint.pp(attendance_anomalies)
 
 
 
