@@ -2,7 +2,6 @@ import gspread
 import pprint
 import csv
 
-
 gc = gspread.oauth()
 # sh = gc.open_by_key('1QE6fZP7YsLY1RRVS9HG6ru1O7sC63LEWxaBjDJXkvUg')  # small sample sheet
 sh = gc.open_by_key('1cek2uerqbb1Der0jPL-VV_YlDCBRXFjNsr5I6rsyWCQ')  # full copy of comb_adm
@@ -10,6 +9,7 @@ worksheet = sh.sheet1
 
 list_of_dicts = worksheet.get_all_records()  # all data in the spreadsheet saved as a list of dictionaries
 list_of_lists = worksheet.get_all_values()  # all data in the spreadsheet saved as a list of lists
+
 
 # cell_list = worksheet.range('A1:A26')
 # values_list = worksheet.col_values(1)
@@ -43,17 +43,75 @@ def find_missing_data(list_of_dicts_in, column_name_to_check):
     return list(filter(lambda missing: missing[column_name_to_check] == '', list_of_dicts_in))
 
 
-def find_all_missing_data(list_of_dicts_in):
+def find_all_missing_data(list_of_dicts_in, column_list_to_check=["ChkDigitStdntID",
+                                                                  "DistStdntID",
+                                                                  "ResdDistInstID",
+                                                                  "ResdSchlInstID",
+                                                                  "AttndDistInstID",
+                                                                  "AttndSchlInstID",
+                                                                  "LglLNm",
+                                                                  "LglFNm",
+                                                                  "BirthDtTxt",
+                                                                  "GndrCd",
+                                                                  "HispEthnicFg",
+                                                                  "AmerIndianAlsknNtvRaceFg",
+                                                                  "AsianRaceFg",
+                                                                  "BlackRaceFg",
+                                                                  "WhiteRaceFg",
+                                                                  "PacIslndrRaceFg",
+                                                                  "LangOrgnCd",
+                                                                  "EnrlGrdCd",
+                                                                  "Addr",
+                                                                  "City",
+                                                                  "ZipCd",
+                                                                  "ResdCntyCd",
+                                                                  "Phn",
+                                                                  "EconDsvntgFg",
+                                                                  "Ttl1Fg",
+                                                                  "SpEdFg",
+                                                                  "Sect504Fg",
+                                                                  "MigrntEdFg",
+                                                                  "IndianEdFg",
+                                                                  "ELFg",
+                                                                  "DstncLrnFg",
+                                                                  "HomeSchlFg",
+                                                                  "TAGPtntTAGFg",
+                                                                  "TAGIntlctGiftFg",
+                                                                  "TAGAcdmTlntRdFg",
+                                                                  "TAGAcdmTlntMaFg",
+                                                                  "TAGCrtvAbltyFg",
+                                                                  "TAGLdrshpAbltyFg",
+                                                                  "TAGPrfmArtsAbltyFg",
+                                                                  "TrnstnProgFg",
+                                                                  "AltEdProgFg",
+                                                                  "ADMProgTypCd",
+                                                                  "ADMEnrlDtTxt",
+                                                                  "ADMEndDtTxt",
+                                                                  "ADMEndDtCd",
+                                                                  "ADMSessDays",
+                                                                  "ADMPrsntDays",
+                                                                  "ADMAbsntDays",
+                                                                  "ADMFTE",
+                                                                  "ADMTuitionTypCd",
+                                                                  "RdEsntlSkillCd",
+                                                                  "WrEsntlSkillCd",
+                                                                  "SkEsntlSkillCd",
+                                                                  "MaEsntlSkillCd",
+                                                                  "DistSpEdProgFg",
+                                                                  "FullAcdmYrSchlFg",
+                                                                  "FullAcdmYrDistFg",
+                                                                  "MltryCnctFg"]):
     """ Function to find students with missing data in a any column
-         Parameter:
-             list_of_dicts_in; this function operates on a list of dictionaries
-         Returns: list
+        Parameter:
+            column_list_to_check; can pass in a list of column names, defaults to a pre-built whitelist
+        Parameter:
+            list_of_dicts_in; this function operates on a list of dictionaries
+        Returns: list
              list of worksheet rows; one row of complete ADM data for each record missing data in the specified column
      """
-    column_names = list(list_of_dicts_in[0].keys())
     missing_val_list = []
-    for name in column_names:
-        missing_val_list += find_missing_data(list_of_dicts, name)
+    for name in column_list_to_check:
+        missing_val_list += find_missing_data(list_of_dicts_in, name)
     # remove duplicates from the returned list
     ret_val = [i for n, i in enumerate(missing_val_list) if i not in missing_val_list[n + 1:]]
     return ret_val
@@ -83,15 +141,13 @@ def find_attendance_anomalies(list_of_dicts_in):
     """
     ret_val = []
     for x in list_of_dicts_in:
-        if x['ADMSessDays'] != ((x['ADMPrsntDays'] + x['ADMAbsntDays'])/10):
+        if x['ADMSessDays'] != ((x['ADMPrsntDays'] + x['ADMAbsntDays']) / 10):
             ret_val.append(x)
     return ret_val
 
 
+missing_data_list = find_all_missing_data(list_of_dicts)
+to_csv(missing_data_list, "students_missing_data.csv")
+
 attendance_anomalies = find_attendance_anomalies(list_of_dicts)
 to_csv(attendance_anomalies, "attendance_anomalies.csv")
-pprint.pp(attendance_anomalies)
-
-
-
-
