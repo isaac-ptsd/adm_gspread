@@ -146,31 +146,63 @@ def find_attendance_anomalies(list_of_dicts_in):
     return ret_val
 
 
-# check for program type 2 (ADMProgTypCd==2)
-if list(filter(lambda type2: type2['ADMProgTypCd'] == 2, list_of_dicts)):
-    print("\nADM PROGRAM TYPE 2 RECORDS ARE PRESENT\n")
-else:
-    print("\nADM PROGRAM TYPE 2 RECORDS ARE NOT PRESENT\n")
+def check_admprog_type_2(list_of_dicts_in):
+    """
+    :param list_of_dicts_in:
+    :return: no return value; will print results to stdout
+    """
+    if list(filter(lambda type2: type2['ADMProgTypCd'] == 2, list_of_dicts_in)):
+        print("\nADM PROGRAM TYPE 2 RECORDS ARE PRESENT\n")
+    else:
+        print("\nADM PROGRAM TYPE 2 RECORDS ARE NOT PRESENT\n")
 
-# check for program type 14 (ADMProgTypCd==14)
-if list(filter(lambda type14: type14['ADMProgTypCd'] == 14, list_of_dicts)):
-    print("\nADM PROGRAM TYPE 14 RECORDS ARE PRESENT\n")
-else:
-    print("\nADM PROGRAM TYPE 14 RECORDS ARE NOT PRESENT\n")
 
-# check for k-8 students that do not have EconDsvntgFg == Y
-set_grade_lvl = ['KG', 1, 2, 3, 4, 5, 6, 7, 8]
-k_8_list = list(filter(lambda k8: k8['EnrlGrdCd'] in set_grade_lvl, list_of_dicts))
-k8_w_N_list = list(filter(lambda econ_check: econ_check['EconDsvntgFg'] != 'Y', k_8_list))
+def check_admprog_type_14(list_of_dicts_in):
+    """
+    :param list_of_dicts_in:
+    :return: no return value; will print results to stdout
+    """
+    if list(filter(lambda type14: type14['ADMProgTypCd'] == 14, list_of_dicts_in)):
+        print("\nADM PROGRAM TYPE 14 RECORDS ARE PRESENT\n")
+    else:
+        print("\nADM PROGRAM TYPE 14 RECORDS ARE NOT PRESENT\n")
 
-if k8_w_N_list:
-    print("\nK-8 students with EconDsvntgFg not set to 'Y' are PRESENT \n")
-    to_csv(k8_w_N_list, "k8_w_N.csv")
-else:
-    print("\nK-8 students with EconDsvntgFg not set to 'Y' are NOT PRESENT \n")
 
-missing_data_list = find_all_missing_data(list_of_dicts)
-to_csv(missing_data_list, "students_missing_data.csv")
+def check_econ_flag_k8(list_of_dicts_in, report_name):
+    """
+    :param list_of_dicts_in:
+    :param report_name: name of csv file generated; NOTE: include .csv in file name
+    :return: no return value, will print to stdout, and create a csv file
+             if K-8 students with EconDsvntgFg not set to 'Y' are PRESENT
+    """
+    set_grade_lvl = ['KG', 1, 2, 3, 4, 5, 6, 7, 8]
+    k_8_list = list(filter(lambda k8: k8['EnrlGrdCd'] in set_grade_lvl, list_of_dicts_in))
+    k8_w_N_list = list(filter(lambda econ_check: econ_check['EconDsvntgFg'] != 'Y', k_8_list))
 
-attendance_anomalies = find_attendance_anomalies(list_of_dicts)
-to_csv(attendance_anomalies, "attendance_anomalies.csv")
+    if k8_w_N_list:
+        print("\nK-8 students with EconDsvntgFg not set to 'Y' are PRESENT \n")
+        print("GENERATING CSV FILE CONTAINING THESE RESULTS\n")
+        to_csv(k8_w_N_list, report_name)
+    else:
+        print("\nK-8 students with EconDsvntgFg not set to 'Y' are NOT PRESENT \n")
+
+
+def check_eth_flags(list_of_dicts_in, report_name):
+    """
+    :param list_of_dicts_in:
+    :param report_name: name of csv file generated; NOTE: include .csv in file name
+    :return: no return value, will print to stdout, and create a csv file
+             if students with no ethnic flag set are found
+    """
+    no_eth_flag_set = []
+    for x in list_of_dicts_in:
+        flag_comp = (x['HispEthnicFg'] + x['AmerIndianAlsknNtvRaceFg'] + x['AsianRaceFg'] + x['BlackRaceFg'] + x['WhiteRaceFg'] + x['PacIslndrRaceFg'])
+        if flag_comp == "NNNNNN":
+            no_eth_flag_set.append(x)
+    if no_eth_flag_set:
+        print("\nSTUDENTS WITHOUT AN ETHNIC FLAG SET WERE FOUND")
+        print("GENERATING CSV FILE CONTAINING THESE RESULTS\n")
+        to_csv(no_eth_flag_set, report_name)
+
+
+check_eth_flags(list_of_dicts, "students_mis_eth_flag.csv")
