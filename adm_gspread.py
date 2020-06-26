@@ -1,24 +1,16 @@
 import gspread
-import pprint
-import csv
-
 from gspread import Spreadsheet
 from gspread import utils
+import csv
 
+
+# authorize, and open a google spreadsheet
 gc = gspread.oauth()
-# sh = gc.open_by_key('1QE6fZP7YsLY1RRVS9HG6ru1O7sC63LEWxaBjDJXkvUg')  # small sample sheet
 sh: Spreadsheet = gc.open_by_key('1cek2uerqbb1Der0jPL-VV_YlDCBRXFjNsr5I6rsyWCQ')  # full copy of comb_adm
 worksheet = sh.sheet1
 
-list_of_dicts = worksheet.get_all_records()  # all data in the spreadsheet saved as a list of dictionaries
-
-# cell_list = worksheet.range('A1:A26')
-# values_list = worksheet.col_values(1)
-
-# new_values = ['0' + value for value in values_list]
-# for i, val in enumerate(new_values):
-#     cell_list[i].value = val
-# worksheet.update_cells(cell_list)
+# pulling all data from the spreadsheet with one API call
+list_of_dicts = worksheet.get_all_records()  # spreadsheet data saved as a list of dictionaries
 
 
 def find_missing_ssid(list_of_dicts_in):
@@ -127,11 +119,14 @@ def to_csv(list_of_dicts_in, name_of_csv_to_create):
     Returns: no return value
         will create a csv file in current directory
     """
-    keys = list_of_dicts_in[0].keys()
-    with open(name_of_csv_to_create, 'w', newline='') as output_file:
-        dict_writer = csv.DictWriter(output_file, keys)
-        dict_writer.writeheader()
-        dict_writer.writerows(list_of_dicts_in)
+    try:
+        keys = list_of_dicts_in[0].keys()
+        with open(name_of_csv_to_create, 'w', newline='') as output_file:
+            dict_writer = csv.DictWriter(output_file, keys)
+            dict_writer.writeheader()
+            dict_writer.writerows(list_of_dicts_in)
+    except Exception as e:
+        print(e)
 
 
 def find_attendance_anomalies(list_of_dicts_in):
@@ -152,14 +147,13 @@ def check_admprog_type_2(list_of_dicts_in):
     :param list_of_dicts_in:
     :return: bool
     """
-    retval = bool
     if list(filter(lambda type2: type2['ADMProgTypCd'] == 2, list_of_dicts_in)):
-        print("\nADM PROGRAM TYPE 2 RECORDS ARE PRESENT\n")
-        retval = True
+        print("\nADM PROGRAM TYPE 2 RECORDS ARE PRESENT")
+        return True
     else:
-        print("\nADM PROGRAM TYPE 2 RECORDS ARE NOT PRESENT\n")
-        retval = False
-    return retval
+        print("\nADM PROGRAM TYPE 2 RECORDS ARE NOT PRESENT")
+        return False
+
 
 def check_admprog_type_14(list_of_dicts_in):
     """
@@ -167,36 +161,33 @@ def check_admprog_type_14(list_of_dicts_in):
     :return: no return value; will print results to stdout
     """
     if list(filter(lambda type14: type14['ADMProgTypCd'] == 14, list_of_dicts_in)):
-        print("\nADM PROGRAM TYPE 14 RECORDS ARE PRESENT\n")
+        print("\nADM PROGRAM TYPE 14 RECORDS ARE PRESENT")
+        return True
     else:
-        print("\nADM PROGRAM TYPE 14 RECORDS ARE NOT PRESENT\n")
+        print("\nADM PROGRAM TYPE 14 RECORDS ARE NOT PRESENT")
+        return False
 
 
-def check_econ_flag_k8(list_of_dicts_in, report_name):
+def check_econ_flag_k8(list_of_dicts_in):
     """
     :param list_of_dicts_in:
-    :param report_name: name of csv file generated; NOTE: include .csv in file name
-    :return: no return value, will print to stdout, and create a csv file
-             if K-8 students with EconDsvntgFg not set to 'Y' are PRESENT
+    :return: list of dictionaries of K-8 students with EconDsvntgFg not set to 'Y'
     """
     set_grade_lvl = ['KG', 1, 2, 3, 4, 5, 6, 7, 8]
     k_8_list = list(filter(lambda k8: k8['EnrlGrdCd'] in set_grade_lvl, list_of_dicts_in))
     k8_w_N_list = list(filter(lambda econ_check: econ_check['EconDsvntgFg'] != 'Y', k_8_list))
 
     if k8_w_N_list:
-        print("\nK-8 students with EconDsvntgFg not set to 'Y' are PRESENT \n")
-        print("GENERATING CSV FILE CONTAINING THESE RESULTS\n")
-        to_csv(k8_w_N_list, report_name)
+        print("\nK-8 students with EconDsvntgFg not set to 'Y' are PRESENT")
+        return k8_w_N_list
     else:
-        print("\nK-8 students with EconDsvntgFg not set to 'Y' are NOT PRESENT \n")
+        print("\nK-8 students with EconDsvntgFg not set to 'Y' are NOT PRESENT")
 
 
-def check_eth_flags(list_of_dicts_in, report_name):
+def check_eth_flags(list_of_dicts_in):
     """
     :param list_of_dicts_in:
-    :param report_name: name of csv file generated; NOTE: include .csv in file name
-    :return: no return value, will print to stdout, and create a csv file
-             if students with no ethnic flag set are found
+    :return: list of dictionaries containing all records that do not have an ethnic flag set
     """
     no_eth_flag_set = []
     for x in list_of_dicts_in:
@@ -205,8 +196,7 @@ def check_eth_flags(list_of_dicts_in, report_name):
             no_eth_flag_set.append(x)
     if no_eth_flag_set:
         print("\nSTUDENTS WITHOUT AN ETHNIC FLAG SET WERE FOUND")
-        print("GENERATING CSV FILE CONTAINING THESE RESULTS\n")
-        to_csv(no_eth_flag_set, report_name)
+        return no_eth_flag_set
 
 
 def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.us'):
@@ -217,22 +207,35 @@ def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.
     :return: No return value
              Will add a new worksheet to the spreadsheet
     """
+    try:
+        headers = list(data_in[0].keys())
+        sheet = sh.add_worksheet(sheet_name, len(data_in), len(headers))
+        sheet.append_row(headers)
+        last_cell = gspread.utils.rowcol_to_a1(len(data_in), len(headers))
+        cell_range = sheet.range('A2:'+last_cell)
+        flattened_test_data = []
+        for row in data_in:
+            for column in headers:
+                flattened_test_data.append(row[column])
 
-    headers = list(data_in[0].keys())
-    sheet = sh.add_worksheet(sheet_name, len(data_in), len(headers))
-    sheet.append_row(headers)
-    last_cell = gspread.utils.rowcol_to_a1(len(data_in), len(headers))
-    cell_range = sheet.range('A2:'+last_cell)
-    flattened_test_data = []
-    for row in data_in:
-        for column in headers:
-            flattened_test_data.append(row[column])
+        for i, cell in enumerate(cell_range):
+            cell.value = flattened_test_data[i]
 
-    for i, cell in enumerate(cell_range):
-        cell.value = flattened_test_data[i]
-
-    sheet.update_cells(cell_range)
+        sheet.update_cells(cell_range)
+    except TypeError as e:
+        print("\nEmpty List passed as argument - no worksheet will be created")
 
 
-missing_data_records = find_all_missing_data(list_of_dicts)
-add_wsheet(missing_data_records, "records_missing_data")
+add_wsheet(find_all_missing_data(list_of_dicts), "records_missing_data")
+
+add_wsheet(check_eth_flags(list_of_dicts), "missing_eht_flag")
+
+add_wsheet(check_econ_flag_k8(list_of_dicts), "k8_N_econ_flag")
+
+add_wsheet(find_attendance_anomalies(list_of_dicts), "attendance_anomalies")
+
+check_admprog_type_14(list_of_dicts)
+
+check_admprog_type_2(list_of_dicts)
+
+
