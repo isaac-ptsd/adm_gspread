@@ -6,7 +6,8 @@ import csv
 
 # authorize, and open a google spreadsheet
 gc = gspread.oauth()
-sh: Spreadsheet = gc.open_by_key('1cek2uerqbb1Der0jPL-VV_YlDCBRXFjNsr5I6rsyWCQ')  # full copy of comb_adm
+# sh: Spreadsheet = gc.open_by_key('1cek2uerqbb1Der0jPL-VV_YlDCBRXFjNsr5I6rsyWCQ')  # full copy of comb_adm
+
 worksheet = sh.sheet1
 
 # pulling all data from the spreadsheet with one API call
@@ -96,6 +97,10 @@ def find_all_missing_data(list_of_dicts_in, column_list_to_check=["ChkDigitStdnt
         missing_val_list += find_missing_data(list_of_dicts_in, name)
     # remove duplicates from the returned list
     ret_val = [i for n, i in enumerate(missing_val_list) if i not in missing_val_list[n + 1:]]
+    if ret_val:
+        print("\nRECORDS MISSING DATA FOUND")
+    else:
+        print("\nNO RECORDS MISSING DATA FOUND")
     return ret_val
 
 
@@ -186,7 +191,8 @@ def check_eth_flags(list_of_dicts_in):
     if no_eth_flag_set:
         print("\nSTUDENTS WITHOUT AN ETHNIC FLAG SET WERE FOUND")
         return no_eth_flag_set
-
+    else:
+        print("\nSTUDENTS WITHOUT AN ETHNIC FLAG SET WERE *NOT* FOUND")
 
 def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.us'):
     """
@@ -215,16 +221,22 @@ def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.
         print("\nEmpty List passed as argument - no worksheet will be created")
 
 
+print("\nChecking for missing data:")
 add_wsheet(find_all_missing_data(list_of_dicts), "records_missing_data")
 
+print("\nChecking ethnic flags:")
 add_wsheet(check_eth_flags(list_of_dicts), "missing_eht_flag")
 
+print("\nChecking KG - 8 for econ EconDsvntgFg set to 'Y':")
 add_wsheet(check_econ_flag_k8(list_of_dicts), "k8_N_econ_flag")
 
+print("\nChecking for attendance anomalies:")
 add_wsheet(find_attendance_anomalies(list_of_dicts), "attendance_anomalies")
 
+print("\nChecking for ADM program type 14 students:")
 check_admprog_type_14(list_of_dicts)
 
+print("\nChecking for ADM program type 2 students:")
 check_admprog_type_2(list_of_dicts)
 
 
