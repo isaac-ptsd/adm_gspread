@@ -13,16 +13,6 @@ worksheet = sh.sheet1
 list_of_dicts = worksheet.get_all_records()  # spreadsheet data saved as a list of dictionaries
 
 
-def find_missing_ssid(list_of_dicts_in):
-    """ Function to find students with missing SSID's
-        Parameter:
-            list_of_dicts_in; this function operates on a list of dictionaries
-        Returns: list
-            list of worksheet rows; one row of complete ADM data for each record missing an SSID
-    """
-    return list(filter(lambda missing: missing['ChkDigitStdntID'] == '', list_of_dicts_in))
-
-
 def find_missing_data(list_of_dicts_in, column_name_to_check):
     """ Function to find students with missing data in a specified column
         Parameter:
