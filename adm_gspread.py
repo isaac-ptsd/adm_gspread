@@ -7,7 +7,7 @@ import csv
 # authorize, and open a google spreadsheet
 gc = gspread.oauth()
 # sh: Spreadsheet = gc.open_by_key('1cek2uerqbb1Der0jPL-VV_YlDCBRXFjNsr5I6rsyWCQ')  # full copy of comb_adm
-
+sh: Spreadsheet = gc.open_by_key('1woYgnf3cL5oLr57Yr7bKrEB2-ZU5RvjQA0ZtTkENMO4') # live adm_comb file
 worksheet = sh.sheet1
 
 # pulling all data from the spreadsheet with one API call
@@ -219,6 +219,21 @@ def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.
         sheet.update_cells(cell_range)
     except TypeError as e:
         print("\nEmpty List passed as argument - no worksheet will be created")
+
+
+def check_elfg(list_of_dicts_in):
+    """
+    :param list_of_dicts_in:
+    :return:
+    """
+    elfg_flag_set = list(filter(lambda elfg_check: elfg_check['ELFg'] == 'Y', list_of_dicts_in))
+    type_2 = list(filter(lambda prog2_check: prog2_check['ADMProgTypCd'] == '2', elfg_flag_set))
+    type_1 = list(filter(lambda prog2_check: prog2_check['ADMProgTypCd'] == '1', elfg_flag_set))
+    return diff(type_1, type_2)
+
+def diff(list1, list2):
+    return list(set(list1), set(list2))
+
 
 
 print("\nChecking for missing data:")
