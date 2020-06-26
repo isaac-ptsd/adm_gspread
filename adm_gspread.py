@@ -2,14 +2,15 @@ import gspread
 import pprint
 import csv
 
+from gspread import Spreadsheet
+from gspread import utils
+
 gc = gspread.oauth()
 # sh = gc.open_by_key('1QE6fZP7YsLY1RRVS9HG6ru1O7sC63LEWxaBjDJXkvUg')  # small sample sheet
-sh = gc.open_by_key('1cek2uerqbb1Der0jPL-VV_YlDCBRXFjNsr5I6rsyWCQ')  # full copy of comb_adm
+sh: Spreadsheet = gc.open_by_key('1cek2uerqbb1Der0jPL-VV_YlDCBRXFjNsr5I6rsyWCQ')  # full copy of comb_adm
 worksheet = sh.sheet1
 
 list_of_dicts = worksheet.get_all_records()  # all data in the spreadsheet saved as a list of dictionaries
-list_of_lists = worksheet.get_all_values()  # all data in the spreadsheet saved as a list of lists
-
 
 # cell_list = worksheet.range('A1:A26')
 # values_list = worksheet.col_values(1)
@@ -149,13 +150,16 @@ def find_attendance_anomalies(list_of_dicts_in):
 def check_admprog_type_2(list_of_dicts_in):
     """
     :param list_of_dicts_in:
-    :return: no return value; will print results to stdout
+    :return: bool
     """
+    retval = bool
     if list(filter(lambda type2: type2['ADMProgTypCd'] == 2, list_of_dicts_in)):
         print("\nADM PROGRAM TYPE 2 RECORDS ARE PRESENT\n")
+        retval = True
     else:
         print("\nADM PROGRAM TYPE 2 RECORDS ARE NOT PRESENT\n")
-
+        retval = False
+    return retval
 
 def check_admprog_type_14(list_of_dicts_in):
     """
@@ -205,4 +209,30 @@ def check_eth_flags(list_of_dicts_in, report_name):
         to_csv(no_eth_flag_set, report_name)
 
 
-check_eth_flags(list_of_dicts, "students_mis_eth_flag.csv")
+def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.us'):
+    """
+    :param data_in: List of dictionaries
+    :param sheet_name: String
+    :param email_in: String: defaults to 'isaac.stoutenburgh@phoenix.k12.or.us'
+    :return: No return value
+             Will add a new worksheet to the spreadsheet
+    """
+
+    headers = list(data_in[0].keys())
+    sheet = sh.add_worksheet(sheet_name, len(data_in), len(headers))
+    sheet.append_row(headers)
+    last_cell = gspread.utils.rowcol_to_a1(len(data_in), len(headers))
+    cell_range = sheet.range('A2:'+last_cell)
+    flattened_test_data = []
+    for row in data_in:
+        for column in headers:
+            flattened_test_data.append(row[column])
+
+    for i, cell in enumerate(cell_range):
+        cell.value = flattened_test_data[i]
+
+    sheet.update_cells(cell_range)
+
+
+missing_data_records = find_all_missing_data(list_of_dicts)
+add_wsheet(missing_data_records, "records_missing_data")
