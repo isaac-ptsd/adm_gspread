@@ -19,7 +19,6 @@ def find_missing_data(list_of_dicts_in, column_name_to_check):
             list_of_dicts_in; this function operates on a list of dictionaries
         Parameter:
             column_name_to_check; this is the column the function checks for missing data
-
         Returns: list
             list of worksheet rows; one row of complete ADM data for each record missing data in the specified column
     """
