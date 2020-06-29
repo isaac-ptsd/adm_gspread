@@ -6,8 +6,8 @@ import csv
 
 # authorize, and open a google spreadsheet
 gc = gspread.oauth()
-# sh: Spreadsheet = gc.open_by_key('1cek2uerqbb1Der0jPL-VV_YlDCBRXFjNsr5I6rsyWCQ')  # full copy of comb_adm
-sh: Spreadsheet = gc.open_by_key('1woYgnf3cL5oLr57Yr7bKrEB2-ZU5RvjQA0ZtTkENMO4') # live adm_comb file
+sh: Spreadsheet = gc.open_by_key('1cek2uerqbb1Der0jPL-VV_YlDCBRXFjNsr5I6rsyWCQ')  # full copy of comb_adm
+# sh: Spreadsheet = gc.open_by_key('1woYgnf3cL5oLr57Yr7bKrEB2-ZU5RvjQA0ZtTkENMO4') # live adm_comb file
 worksheet = sh.sheet1
 
 # pulling all data from the spreadsheet with one API call
@@ -48,7 +48,6 @@ def find_all_missing_data(list_of_dicts_in, column_list_to_check=["ChkDigitStdnt
                                                                   "City",
                                                                   "ZipCd",
                                                                   "ResdCntyCd",
-                                                                  "Phn",
                                                                   "EconDsvntgFg",
                                                                   "Ttl1Fg",
                                                                   "SpEdFg",
@@ -194,6 +193,7 @@ def check_eth_flags(list_of_dicts_in):
     else:
         print("\nSTUDENTS WITHOUT AN ETHNIC FLAG SET WERE *NOT* FOUND")
 
+
 def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.us'):
     """
     :param data_in: List of dictionaries
@@ -203,7 +203,10 @@ def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.
              Will add a new worksheet to the spreadsheet
     """
     try:
-        headers = list(data_in[0].keys())
+        if data_in[0]:
+            headers = list(data_in[0].keys())
+        else:
+            headers = list(data_in.keys())
         sheet = sh.add_worksheet(sheet_name, len(data_in), len(headers))
         sheet.append_row(headers)
         last_cell = gspread.utils.rowcol_to_a1(len(data_in), len(headers))
@@ -221,37 +224,43 @@ def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.
         print("\nEmpty List passed as argument - no worksheet will be created")
 
 
+# check that records where ELFg = yes, also have a program type 2 record
 def check_elfg(list_of_dicts_in):
     """
     :param list_of_dicts_in:
     :return:
     """
     elfg_flag_set = list(filter(lambda elfg_check: elfg_check['ELFg'] == 'Y', list_of_dicts_in))
-    type_2 = list(filter(lambda prog2_check: prog2_check['ADMProgTypCd'] == '2', elfg_flag_set))
-    type_1 = list(filter(lambda prog2_check: prog2_check['ADMProgTypCd'] == '1', elfg_flag_set))
-    return diff(type_1, type_2)
+    type_2 = list(filter(lambda prog2_check: prog2_check['ADMProgTypCd'] == 2, elfg_flag_set))
+    type_1 = list(filter(lambda prog2_check: prog2_check['ADMProgTypCd'] == 1, elfg_flag_set))
+    list_diff = []
+    for stu_1 in type_1:
+        if not any(stu_2["DistStdntID"] == stu_1["DistStdntID"] for stu_2 in type_2):
+            list_diff.append(stu_1)
+    return list_diff
 
-def diff(list1, list2):
-    return list(set(list1), set(list2))
 
+# calculate CalcADMAmt =(BL2+BM2)/BK2/BO2
 
+# print("\nChecking for missing data:")
+# add_wsheet(find_all_missing_data(list_of_dicts), "records_missing_data")
+#
+# print("\nChecking ethnic flags:")
+# add_wsheet(check_eth_flags(list_of_dicts), "missing_eht_flag")
+#
+# print("\nChecking KG - 8 for econ EconDsvntgFg set to 'Y':")
+# add_wsheet(check_econ_flag_k8(list_of_dicts), "k8_N_econ_flag")
+#
+# print("\nChecking for attendance anomalies:")
+# add_wsheet(find_attendance_anomalies(list_of_dicts), "attendance_anomalies")
+#
+# print("\nChecking for ADM program type 14 students:")
+# check_admprog_type_14(list_of_dicts)
+#
+# print("\nChecking for ADM program type 2 students:")
+# check_admprog_type_2(list_of_dicts)
 
-print("\nChecking for missing data:")
-add_wsheet(find_all_missing_data(list_of_dicts), "records_missing_data")
-
-print("\nChecking ethnic flags:")
-add_wsheet(check_eth_flags(list_of_dicts), "missing_eht_flag")
-
-print("\nChecking KG - 8 for econ EconDsvntgFg set to 'Y':")
-add_wsheet(check_econ_flag_k8(list_of_dicts), "k8_N_econ_flag")
-
-print("\nChecking for attendance anomalies:")
-add_wsheet(find_attendance_anomalies(list_of_dicts), "attendance_anomalies")
-
-print("\nChecking for ADM program type 14 students:")
-check_admprog_type_14(list_of_dicts)
-
-print("\nChecking for ADM program type 2 students:")
-check_admprog_type_2(list_of_dicts)
+print("Checking for type 2 matches:")
+add_wsheet(check_elfg(list_of_dicts), "no_matching_ADMProgTypCd2")
 
 
