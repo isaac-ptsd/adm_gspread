@@ -2,12 +2,13 @@ import gspread
 from gspread import Spreadsheet
 from gspread import utils
 import csv
+import pprint
 
 
 # authorize, and open a google spreadsheet
 gc = gspread.oauth()
-sh: Spreadsheet = gc.open_by_key('1cek2uerqbb1Der0jPL-VV_YlDCBRXFjNsr5I6rsyWCQ')  # full copy of comb_adm
-# sh: Spreadsheet = gc.open_by_key('1woYgnf3cL5oLr57Yr7bKrEB2-ZU5RvjQA0ZtTkENMO4') # live adm_comb file
+# sh: Spreadsheet = gc.open_by_key('1cek2uerqbb1Der0jPL-VV_YlDCBRXFjNsr5I6rsyWCQ')  # COPY of adm_comb
+sh: Spreadsheet = gc.open_by_key('1woYgnf3cL5oLr57Yr7bKrEB2-ZU5RvjQA0ZtTkENMO4')  # LIVE adm_comb
 worksheet = sh.sheet1
 
 # pulling all data from the spreadsheet with one API call
@@ -228,7 +229,8 @@ def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.
 def check_elfg(list_of_dicts_in):
     """
     :param list_of_dicts_in:
-    :return:
+    :return: list of dicts, containing all records (program type 1) that have ELFg set,
+             but no corresponding program type two record
     """
     elfg_flag_set = list(filter(lambda elfg_check: elfg_check['ELFg'] == 'Y', list_of_dicts_in))
     type_2 = list(filter(lambda prog2_check: prog2_check['ADMProgTypCd'] == 2, elfg_flag_set))
@@ -240,7 +242,60 @@ def check_elfg(list_of_dicts_in):
     return list_diff
 
 
-# calculate CalcADMAmt =(BL2+BM2)/BK2/BO2
+def calculate_update_calcadmamt(list_of_dicts_in):
+    """
+    :param list_of_dicts_in:
+    :return: list of calculated adm values,
+             NOTE: will also update the CalcADMAmt column associated with the open worksheet
+    """
+    student_amd_calc = []
+    for student in list_of_dicts_in:
+        if student["ADMPrsntDays"] != 0 or \
+           student["ADMAbsntDays"] != 0 and \
+           student["ADMSessDays"] != 0 and \
+           student["ADMFTE"] != 0:
+            student_amd_calc.append(
+                ((student["ADMPrsntDays"] + student["ADMAbsntDays"]) / student["ADMSessDays"]) / student["ADMFTE"])
+        else:
+            student_amd_calc.append(0)
+    cell_list = worksheet.range('CC2:CC' + str(worksheet.row_count))
+    for i, val in enumerate(student_amd_calc):
+        cell_list[i].value = val
+    worksheet.update_cells(cell_list)
+    return student_amd_calc
+
+
+def generate_sped_list(list_of_dicts_in):
+    """
+    :param list_of_dicts_in:
+    :return: List of students with SpEdFg == 'Y'
+    """
+    return [student for student in list_of_dicts_in if (student["SpEdFg"] == 'Y')]
+
+
+def find_no_dup_sped(list_of_dicts_in):
+    """
+    :param list_of_dicts_in:
+    :return: list of SpEd students who have only 1 record in the ADM
+    """
+    sped_list = [student for student in list_of_dicts_in if (student["SpEdFg"] == 'Y')]
+    no_dup = []
+    for i in sped_list:
+        count = 0
+        for j in sped_list:
+            if i["DistStdntID"] == j["DistStdntID"]:
+                count += 1
+        if count == 1:
+            no_dup.append(i)
+    return no_dup
+
+
+print("\nChecking for SpEd Students:")
+add_wsheet(generate_sped_list(list_of_dicts), "SpEd_students")
+add_wsheet(find_no_dup_sped(list_of_dicts), "SpEd_no_dup_record")
+
+# print("\nCalculating ADM Amount:")
+# calculate_update_calcadmamt(list_of_dicts)
 
 # print("\nChecking for missing data:")
 # add_wsheet(find_all_missing_data(list_of_dicts), "records_missing_data")
@@ -250,17 +305,14 @@ def check_elfg(list_of_dicts_in):
 #
 # print("\nChecking KG - 8 for econ EconDsvntgFg set to 'Y':")
 # add_wsheet(check_econ_flag_k8(list_of_dicts), "k8_N_econ_flag")
-#
 # print("\nChecking for attendance anomalies:")
 # add_wsheet(find_attendance_anomalies(list_of_dicts), "attendance_anomalies")
-#
+# FFF
 # print("\nChecking for ADM program type 14 students:")
 # check_admprog_type_14(list_of_dicts)
 #
 # print("\nChecking for ADM program type 2 students:")
 # check_admprog_type_2(list_of_dicts)
 
-print("Checking for type 2 matches:")
-add_wsheet(check_elfg(list_of_dicts), "no_matching_ADMProgTypCd2")
-
-
+# print("Checking for type 2 matches:")
+# add_wsheet(check_elfg(list_of_dicts), "no_matching_ADMProgTypCd2")
