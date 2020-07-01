@@ -266,6 +266,10 @@ def calculate_update_calcadmamt(list_of_dicts_in):
 
 
 def compare_calcadm_school_counts(list_of_dicts_in):
+    """
+    :param list_of_dicts_in:
+    :return: no return value will print to stdout a comparison of the ADM amount and school attendance numbers
+    """
     type_1 = list(filter(lambda prog2_check: prog2_check['ADMProgTypCd'] == 1, list_of_dicts_in))
 
     i = 0
