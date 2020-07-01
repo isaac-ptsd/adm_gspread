@@ -265,6 +265,17 @@ def calculate_update_calcadmamt(list_of_dicts_in):
     return student_amd_calc
 
 
+def compare_calcadm_school_counts(list_of_dicts_in):
+    type_1 = list(filter(lambda prog2_check: prog2_check['ADMProgTypCd'] == 1, list_of_dicts_in))
+
+    i = 0
+    while i < 5:
+        students_list = [student for student in type_1 if (student["ResdSchlInstID"] == 370 + i)]
+        sum_cal = sum([s["CalcADMAmt"] for s in students_list])
+        print("\nStudent count " + str(370+i) + ": " + str(len(students_list)) + " -- Sum CalcADMAmt: " + str(sum_cal))
+        i += 1
+
+
 def generate_sped_list(list_of_dicts_in):
     """
     :param list_of_dicts_in:
@@ -290,9 +301,26 @@ def find_no_dup_sped(list_of_dicts_in):
     return no_dup
 
 
-print("\nChecking for SpEd Students:")
-add_wsheet(generate_sped_list(list_of_dicts), "SpEd_students")
-add_wsheet(find_no_dup_sped(list_of_dicts), "SpEd_no_dup_record")
+def check_non_type2_dups(list_of_dicts_in):
+    no_type_2 = [student for student in list_of_dicts_in if (student["ADMProgTypCd"] != 2)]
+    duplicate_records = []
+    for i in no_type_2:
+        count = 0
+        for j in no_type_2:
+            if i["DistStdntID"] == j["DistStdntID"]:
+                count += 1
+        if count > 1:
+            duplicate_records.append(i)
+    return duplicate_records
+
+
+# add_wsheet(check_non_type2_dups(list_of_dicts), "duplicates_exclude_type2")
+
+compare_calcadm_school_counts(list_of_dicts)
+
+# print("\nChecking for SpEd Students:")
+# add_wsheet(generate_sped_list(list_of_dicts), "SpEd_students")
+# add_wsheet(find_no_dup_sped(list_of_dicts), "SpEd_no_dup_record")
 
 # print("\nCalculating ADM Amount:")
 # calculate_update_calcadmamt(list_of_dicts)
