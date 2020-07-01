@@ -306,6 +306,10 @@ def find_no_dup_sped(list_of_dicts_in):
 
 
 def check_non_type2_dups(list_of_dicts_in):
+    """
+    :param list_of_dicts_in:
+    :return: returns a list of students with duplicate records - excluding program type 2
+    """
     no_type_2 = [student for student in list_of_dicts_in if (student["ADMProgTypCd"] != 2)]
     duplicate_records = []
     for i in no_type_2:

@@ -89,4 +89,50 @@ Functions available:
     :return: No return value
              Will add a new worksheet to the spreadsheet
     """
-   
+    
+`def check_elfg(list_of_dicts_in):`
+
+    """
+    :param list_of_dicts_in:
+    :return: list of dicts, containing all records (program type 1) that have ELFg set,
+             but no corresponding program type two record
+    """
+    
+`def calculate_update_calcadmamt(list_of_dicts_in):`
+
+    """
+    :param list_of_dicts_in:
+    :return: list of calculated adm values,
+             NOTE: will also update the CalcADMAmt column associated with the open worksheet
+    """
+    
+`def compare_calcadm_school_counts(list_of_dicts_in):`
+
+    """
+    :param list_of_dicts_in:
+    :return: no return value will print to stdout a comparison of the ADM amount and school attendance numbers
+    """
+    
+`def generate_sped_list(list_of_dicts_in):`
+
+    """
+    :param list_of_dicts_in:
+    :return: List of students with SpEdFg == 'Y'
+    """
+    
+`def find_no_dup_sped(list_of_dicts_in):`
+
+    """
+    :param list_of_dicts_in:
+    :return: list of SpEd students who have only 1 record in the ADM
+    """
+    
+`def check_non_type2_dups(list_of_dicts_in):`
+    
+      """
+    :param list_of_dicts_in: 
+    :return: returns a list of students with duplicate records - excluding program type 2
+    """
+    
+    
+    
