@@ -7,8 +7,8 @@ import pprint
 
 # authorize, and open a google spreadsheet
 gc = gspread.oauth()
-# sh: Spreadsheet = gc.open_by_key('1cek2uerqbb1Der0jPL-VV_YlDCBRXFjNsr5I6rsyWCQ')  # COPY of adm_comb
-sh: Spreadsheet = gc.open_by_key('1woYgnf3cL5oLr57Yr7bKrEB2-ZU5RvjQA0ZtTkENMO4')  # LIVE adm_comb
+sh: Spreadsheet = gc.open_by_key('1cek2uerqbb1Der0jPL-VV_YlDCBRXFjNsr5I6rsyWCQ')  # COPY of adm_comb
+# sh: Spreadsheet = gc.open_by_key('1woYgnf3cL5oLr57Yr7bKrEB2-ZU5RvjQA0ZtTkENMO4')  # LIVE adm_comb
 worksheet = sh.sheet1
 
 # pulling all data from the spreadsheet with one API call
@@ -324,7 +324,7 @@ def check_non_type2_dups(list_of_dicts_in):
 
 # add_wsheet(check_non_type2_dups(list_of_dicts), "duplicates_exclude_type2")
 
-compare_calcadm_school_counts(list_of_dicts)
+# compare_calcadm_school_counts(list_of_dicts)
 
 # print("\nChecking for SpEd Students:")
 # add_wsheet(generate_sped_list(list_of_dicts), "SpEd_students")
@@ -351,4 +351,4 @@ compare_calcadm_school_counts(list_of_dicts)
 # check_admprog_type_2(list_of_dicts)
 
 # print("Checking for type 2 matches:")
-# add_wsheet(check_elfg(list_of_dicts), "no_matching_ADMProgTypCd2")
+# add_wsheet(check_elfg(list_of_dicts), "no_matching_ADMProgTypCd2"))
