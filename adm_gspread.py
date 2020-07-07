@@ -322,33 +322,39 @@ def check_non_type2_dups(list_of_dicts_in):
     return duplicate_records
 
 
-# add_wsheet(check_non_type2_dups(list_of_dicts), "duplicates_exclude_type2")
+def main():
+    # add_wsheet(check_non_type2_dups(list_of_dicts), "duplicates_exclude_type2")
 
-# compare_calcadm_school_counts(list_of_dicts)
+    compare_calcadm_school_counts(list_of_dicts)
 
-# print("\nChecking for SpEd Students:")
-# add_wsheet(generate_sped_list(list_of_dicts), "SpEd_students")
-# add_wsheet(find_no_dup_sped(list_of_dicts), "SpEd_no_dup_record")
+    # print("\nChecking for SpEd Students:")
+    # add_wsheet(generate_sped_list(list_of_dicts), "SpEd_students")
+    # add_wsheet(find_no_dup_sped(list_of_dicts), "SpEd_no_dup_record")
 
-# print("\nCalculating ADM Amount:")
-# calculate_update_calcadmamt(list_of_dicts)
+    # print("\nCalculating ADM Amount:")
+    # calculate_update_calcadmamt(list_of_dicts)
 
-# print("\nChecking for missing data:")
-# add_wsheet(find_all_missing_data(list_of_dicts), "records_missing_data")
-#
-# print("\nChecking ethnic flags:")
-# add_wsheet(check_eth_flags(list_of_dicts), "missing_eht_flag")
-#
-# print("\nChecking KG - 8 for econ EconDsvntgFg set to 'Y':")
-# add_wsheet(check_econ_flag_k8(list_of_dicts), "k8_N_econ_flag")
-# print("\nChecking for attendance anomalies:")
-# add_wsheet(find_attendance_anomalies(list_of_dicts), "attendance_anomalies")
-# FFF
-# print("\nChecking for ADM program type 14 students:")
-# check_admprog_type_14(list_of_dicts)
-#
-# print("\nChecking for ADM program type 2 students:")
-# check_admprog_type_2(list_of_dicts)
+    # print("\nChecking for missing data:")
+    # add_wsheet(find_all_missing_data(list_of_dicts), "records_missing_data")
 
-# print("Checking for type 2 matches:")
-# add_wsheet(check_elfg(list_of_dicts), "no_matching_ADMProgTypCd2"))
+    # print("\nChecking ethnic flags:")
+    # add_wsheet(check_eth_flags(list_of_dicts), "missing_eht_flag")
+
+    # print("\nChecking KG - 8 for econ EconDsvntgFg set to 'Y':")
+    # add_wsheet(check_econ_flag_k8(list_of_dicts), "k8_N_econ_flag")
+
+    # print("\nChecking for attendance anomalies:")
+    # add_wsheet(find_attendance_anomalies(list_of_dicts), "attendance_anomalies")
+
+    # print("\nChecking for ADM program type 14 students:")
+    # check_admprog_type_14(list_of_dicts)
+
+    # print("\nChecking for ADM program type 2 students:")
+    # check_admprog_type_2(list_of_dicts)
+
+    # print("Checking for type 2 matches:")
+    # add_wsheet(check_elfg(list_of_dicts), "no_matching_ADMProgTypCd2"))
+
+
+if __name__ == '__main__':
+    main()
