@@ -4,6 +4,7 @@ from gspread import utils
 import csv
 import pprint
 
+# TODO: check/validate program type 10; enrollment cannot overlap with type 1 record.
 
 # authorize, and open a google spreadsheet
 gc = gspread.oauth()
