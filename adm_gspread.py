@@ -8,8 +8,7 @@ import pprint
 
 # authorize, and open a google spreadsheet
 gc = gspread.oauth()
-sh: Spreadsheet = gc.open_by_key('1cek2uerqbb1Der0jPL-VV_YlDCBRXFjNsr5I6rsyWCQ')  # COPY of adm_comb
-# sh: Spreadsheet = gc.open_by_key('1woYgnf3cL5oLr57Yr7bKrEB2-ZU5RvjQA0ZtTkENMO4')  # LIVE adm_comb
+sh: Spreadsheet = gc.open_by_key('1olvksgCUF8XuRkiAqkQ99QQENc4MGStOWZWO24ttZrI')  # 1st Period 2020
 worksheet = sh.sheet1
 
 # pulling all data from the spreadsheet with one API call
@@ -186,7 +185,8 @@ def check_eth_flags(list_of_dicts_in):
     """
     no_eth_flag_set = []
     for x in list_of_dicts_in:
-        flag_comp = (x['HispEthnicFg'] + x['AmerIndianAlsknNtvRaceFg'] + x['AsianRaceFg'] + x['BlackRaceFg'] + x['WhiteRaceFg'] + x['PacIslndrRaceFg'])
+        flag_comp = (x['HispEthnicFg'] + x['AmerIndianAlsknNtvRaceFg'] + x['AsianRaceFg'] + x['BlackRaceFg'] + x[
+            'WhiteRaceFg'] + x['PacIslndrRaceFg'])
         if flag_comp == "NNNNNN":
             no_eth_flag_set.append(x)
     if no_eth_flag_set:
@@ -212,7 +212,7 @@ def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.
         sheet = sh.add_worksheet(sheet_name, len(data_in), len(headers))
         sheet.append_row(headers)
         last_cell = gspread.utils.rowcol_to_a1(len(data_in), len(headers))
-        cell_range = sheet.range('A2:'+last_cell)
+        cell_range = sheet.range('A2:' + last_cell)
         flattened_test_data = []
         for row in data_in:
             for column in headers:
@@ -223,8 +223,9 @@ def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.
 
         sheet.update_cells(cell_range)
     except TypeError as e:
-        print("\nEmpty List passed as argument - no worksheet will be created")
-
+        print("\nEmpty List passed as argument - no worksheet will be created", e)
+    except IndexError as e:
+        print("\nEmpty List passed as argument - no worksheet will be created", e)
 
 # check that records where ELFg = yes, also have a program type 2 record
 def check_elfg(list_of_dicts_in):
@@ -240,7 +241,12 @@ def check_elfg(list_of_dicts_in):
     for stu_1 in type_1:
         if not any(stu_2["DistStdntID"] == stu_1["DistStdntID"] for stu_2 in type_2):
             list_diff.append(stu_1)
-    return list_diff
+    if len(list_diff) > 0:
+        # todo: this breaks when list_diff has one element
+        print(list_diff)
+        return list_diff
+    else:
+        print("<=0")
 
 
 def calculate_update_calcadmamt(list_of_dicts_in):
@@ -252,11 +258,12 @@ def calculate_update_calcadmamt(list_of_dicts_in):
     student_amd_calc = []
     for student in list_of_dicts_in:
         if student["ADMPrsntDays"] != 0 or \
-           student["ADMAbsntDays"] != 0 and \
-           student["ADMSessDays"] != 0 and \
-           student["ADMFTE"] != 0:
+                student["ADMAbsntDays"] != 0 and \
+                student["ADMSessDays"] != 0 and \
+                student["ADMFTE"] != 0:
             student_amd_calc.append(
-                ((student["ADMPrsntDays"] + student["ADMAbsntDays"]) / student["ADMSessDays"]) / student["ADMFTE"])
+                ((int(student["ADMPrsntDays"]) + int(student["ADMAbsntDays"])) / int(student["ADMSessDays"])) / int(
+                    student["ADMFTE"]))
         else:
             student_amd_calc.append(0)
     cell_list = worksheet.range('CC2:CC' + str(worksheet.row_count))
@@ -274,11 +281,21 @@ def compare_calcadm_school_counts(list_of_dicts_in):
     type_1 = list(filter(lambda prog2_check: prog2_check['ADMProgTypCd'] == 1, list_of_dicts_in))
 
     i = 0
-    while i < 5:
-        students_list = [student for student in type_1 if (student["ResdSchlInstID"] == 370 + i)]
-        sum_cal = sum([s["CalcADMAmt"] for s in students_list])
-        print("\nStudent count " + str(370+i) + ": " + str(len(students_list)) + " -- Sum CalcADMAmt: " + str(sum_cal))
-        i += 1
+    try:
+        while i < 5:
+            students_list = [student for student in type_1 if (student["ResdSchlInstID"] == 370 + i)]
+            # sum_cal = sum([s["CalcADMAmt"] for s in students_list])
+            sum_cal = 0
+            s_error_reporting = ()
+            for s in students_list:
+                sum_cal += s["CalcADMAmt"]
+                s_error_reporting = s
+            print(
+                "\nStudent count " + str(370 + i) + ": " + str(len(students_list)) + " -- Sum CalcADMAmt: " + str(sum_cal))
+            i += 1
+    except TypeError as e:
+        print("ERROR: ", e)
+        print("Record: ", s_error_reporting)
 
 
 def generate_sped_list(list_of_dicts_in):
@@ -294,7 +311,8 @@ def find_no_dup_sped(list_of_dicts_in):
     :param list_of_dicts_in:
     :return: list of SpEd students who have only 1 record in the ADM
     """
-    sped_list = [student for student in list_of_dicts_in if (student["SpEdFg"] == 'Y')]
+    # sped_list = [student for student in list_of_dicts_in if (student["SpEdFg"] == 'Y')]
+    sped_list = generate_sped_list(list_of_dicts_in)
     no_dup = []
     for i in sped_list:
         count = 0
@@ -325,36 +343,37 @@ def check_non_type2_dups(list_of_dicts_in):
 
 def main():
     # add_wsheet(check_non_type2_dups(list_of_dicts), "duplicates_exclude_type2")
-
-    compare_calcadm_school_counts(list_of_dicts)
-
+    #
     # print("\nChecking for SpEd Students:")
     # add_wsheet(generate_sped_list(list_of_dicts), "SpEd_students")
     # add_wsheet(find_no_dup_sped(list_of_dicts), "SpEd_no_dup_record")
-
+    #
     # print("\nCalculating ADM Amount:")
     # calculate_update_calcadmamt(list_of_dicts)
-
+    #
     # print("\nChecking for missing data:")
     # add_wsheet(find_all_missing_data(list_of_dicts), "records_missing_data")
-
+    #
     # print("\nChecking ethnic flags:")
     # add_wsheet(check_eth_flags(list_of_dicts), "missing_eht_flag")
-
+    #
     # print("\nChecking KG - 8 for econ EconDsvntgFg set to 'Y':")
     # add_wsheet(check_econ_flag_k8(list_of_dicts), "k8_N_econ_flag")
-
+    #
     # print("\nChecking for attendance anomalies:")
     # add_wsheet(find_attendance_anomalies(list_of_dicts), "attendance_anomalies")
-
+    #
     # print("\nChecking for ADM program type 14 students:")
     # check_admprog_type_14(list_of_dicts)
-
+    #
     # print("\nChecking for ADM program type 2 students:")
     # check_admprog_type_2(list_of_dicts)
+    #
+    # print("\nChecking for type 2 matches:")
+    # add_wsheet(check_elfg(list_of_dicts), "no_matching_ADMProgTypCd2")
 
-    # print("Checking for type 2 matches:")
-    # add_wsheet(check_elfg(list_of_dicts), "no_matching_ADMProgTypCd2"))
+    print("\nComparing student count to calculated ADM amount:")
+    compare_calcadm_school_counts(list_of_dicts)
 
 
 if __name__ == '__main__':
