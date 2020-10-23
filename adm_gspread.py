@@ -92,11 +92,13 @@ def find_all_missing_data(list_of_dicts_in, column_list_to_check=["ChkDigitStdnt
         Returns: list
              list of worksheet rows; one row of complete ADM data for each record missing data in the specified column
      """
+    # todo: Bug when list of one element
     missing_val_list = []
     for name in column_list_to_check:
         missing_val_list += find_missing_data(list_of_dicts_in, name)
     # remove duplicates from the returned list
     ret_val = [i for n, i in enumerate(missing_val_list) if i not in missing_val_list[n + 1:]]
+    print(ret_val)
     if ret_val:
         print("\nRECORDS MISSING DATA FOUND")
     else:
@@ -220,7 +222,7 @@ def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.
 
         for i, cell in enumerate(cell_range):
             cell.value = flattened_test_data[i]
-
+        print("cell range: ", len(cell_range))
         sheet.update_cells(cell_range)
     except TypeError as e:
         print("\nEmpty List passed as argument - no worksheet will be created", e)
