@@ -2,6 +2,7 @@ import gspread
 from gspread import Spreadsheet
 from gspread import utils
 import csv
+import time
 import pprint
 
 # TODO: check/validate program type 10; enrollment cannot overlap with type 1 record.
@@ -9,6 +10,7 @@ import pprint
 # authorize, and open a google spreadsheet
 gc = gspread.oauth()
 sh: Spreadsheet = gc.open_by_key('1olvksgCUF8XuRkiAqkQ99QQENc4MGStOWZWO24ttZrI')  # 1st Period 2020
+# sh: Spreadsheet = gc.open_by_key('16t2E1MIJap7YO3gYadVz75hhPmh6izRlIiiWxZ40n7s')  # COPY 1st Period 2020
 worksheet = sh.sheet1
 
 # pulling all data from the spreadsheet with one API call
@@ -98,7 +100,6 @@ def find_all_missing_data(list_of_dicts_in, column_list_to_check=["ChkDigitStdnt
         missing_val_list += find_missing_data(list_of_dicts_in, name)
     # remove duplicates from the returned list
     ret_val = [i for n, i in enumerate(missing_val_list) if i not in missing_val_list[n + 1:]]
-    print(ret_val)
     if ret_val:
         print("\nRECORDS MISSING DATA FOUND")
     else:
@@ -219,17 +220,20 @@ def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.
         for row in data_in:
             for column in headers:
                 flattened_test_data.append(row[column])
-
         for i, cell in enumerate(cell_range):
             cell.value = flattened_test_data[i]
         print("cell range: ", len(cell_range))
+        print("cell_range: ", cell_range)
         sheet.update_cells(cell_range)
     except TypeError as e:
-        print("\nEmpty List passed as argument - no worksheet will be created", e)
+        print("\nERROR in function: add_wsheet ", e)
     except IndexError as e:
-        print("\nEmpty List passed as argument - no worksheet will be created", e)
+        print("\nERROR in function: add_wsheet ", e)
+    # except gspread.exceptions.APIError as e:
+    #     print("ERROR in function: add_wsheet ", e)
 
-# check that records where ELFg = yes, also have a program type 2 record
+
+# check that records where ELFg = y, also have a program type 2 record
 def check_elfg(list_of_dicts_in):
     """
     :param list_of_dicts_in:
@@ -280,6 +284,7 @@ def compare_calcadm_school_counts(list_of_dicts_in):
     :param list_of_dicts_in:
     :return: no return value will print to stdout a comparison of the ADM amount and school attendance numbers
     """
+    time.sleep(1)
     type_1 = list(filter(lambda prog2_check: prog2_check['ADMProgTypCd'] == 1, list_of_dicts_in))
 
     i = 0
@@ -373,6 +378,12 @@ def main():
     #
     # print("\nChecking for type 2 matches:")
     # add_wsheet(check_elfg(list_of_dicts), "no_matching_ADMProgTypCd2")
+
+    # todo:
+    #   - Add function that checks for records that have 0 attendance. - exclude record type 2, and 14(?)
+    #       - add to attendance anomalies function?
+    #   - check for enrolled date after end date
+    #   -
 
     print("\nComparing student count to calculated ADM amount:")
     compare_calcadm_school_counts(list_of_dicts)
