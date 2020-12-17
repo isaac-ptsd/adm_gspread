@@ -3,18 +3,13 @@ from gspread import Spreadsheet
 from gspread import utils
 import csv
 import time
-import pprint
 
-# TODO: check/validate program type 10; enrollment cannot overlap with type 1 record.
 
+sheet_key = '1sfc8yxPVzB0fmSD_rj18NaghfhxXiBCahcQgupsgpOU'  # 2nd period adm
 # authorize, and open a google spreadsheet
 gc = gspread.oauth()
-sh: Spreadsheet = gc.open_by_key('1olvksgCUF8XuRkiAqkQ99QQENc4MGStOWZWO24ttZrI')  # 1st Period 2020
-# sh: Spreadsheet = gc.open_by_key('16t2E1MIJap7YO3gYadVz75hhPmh6izRlIiiWxZ40n7s')  # COPY 1st Period 2020
+sh: Spreadsheet = gc.open_by_key(sheet_key)
 worksheet = sh.sheet1
-
-# pulling all data from the spreadsheet with one API call
-list_of_dicts = worksheet.get_all_records()  # spreadsheet data saved as a list of dictionaries
 
 
 def find_missing_data(list_of_dicts_in, column_name_to_check):
@@ -348,46 +343,17 @@ def check_non_type2_dups(list_of_dicts_in):
     return duplicate_records
 
 
-def main():
-    # add_wsheet(check_non_type2_dups(list_of_dicts), "duplicates_exclude_type2")
-    #
-    # print("\nChecking for SpEd Students:")
-    # add_wsheet(generate_sped_list(list_of_dicts), "SpEd_students")
-    # add_wsheet(find_no_dup_sped(list_of_dicts), "SpEd_no_dup_record")
-    #
-    # print("\nCalculating ADM Amount:")
-    # calculate_update_calcadmamt(list_of_dicts)
-    #
-    # print("\nChecking for missing data:")
-    # add_wsheet(find_all_missing_data(list_of_dicts), "records_missing_data")
-    #
-    # print("\nChecking ethnic flags:")
-    # add_wsheet(check_eth_flags(list_of_dicts), "missing_eht_flag")
-    #
-    # print("\nChecking KG - 8 for econ EconDsvntgFg set to 'Y':")
-    # add_wsheet(check_econ_flag_k8(list_of_dicts), "k8_N_econ_flag")
-    #
-    # print("\nChecking for attendance anomalies:")
-    # add_wsheet(find_attendance_anomalies(list_of_dicts), "attendance_anomalies")
-    #
-    # print("\nChecking for ADM program type 14 students:")
-    # check_admprog_type_14(list_of_dicts)
-    #
-    # print("\nChecking for ADM program type 2 students:")
-    # check_admprog_type_2(list_of_dicts)
-    #
-    # print("\nChecking for type 2 matches:")
-    # add_wsheet(check_elfg(list_of_dicts), "no_matching_ADMProgTypCd2")
-
-    # todo:
-    #   - Add function that checks for records that have 0 attendance. - exclude record type 2, and 14(?)
-    #       - add to attendance anomalies function?
-    #   - check for enrolled date after end date
-    #   -
-
-    print("\nComparing student count to calculated ADM amount:")
-    compare_calcadm_school_counts(list_of_dicts)
+def gen_list_of_dicts():
+    # pulling all data from the spreadsheet with one API call
+    return worksheet.get_all_records()  # spreadsheet data saved as a list of dictionaries
 
 
-if __name__ == '__main__':
-    main()
+def check_for_no_att(list_of_dicts_in):
+    """
+    :param list_of_dicts_in:
+    :return: returns all records that have no attendance
+    """
+    return [student for student in list_of_dicts_in if (student["ADMPrsntDays"] == 0)]
+
+
+
