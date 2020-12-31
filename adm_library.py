@@ -3,6 +3,7 @@ from gspread import Spreadsheet
 from gspread import utils
 import csv
 import time
+from datetime import datetime as dt
 
 
 sheet_key = '1sfc8yxPVzB0fmSD_rj18NaghfhxXiBCahcQgupsgpOU'  # 2nd period adm
@@ -354,6 +355,18 @@ def check_for_no_att(list_of_dicts_in):
     :return: returns all records that have no attendance
     """
     return [student for student in list_of_dicts_in if (student["ADMPrsntDays"] == 0)]
+
+
+def enrolled_after_end(list_of_dicts_in):
+    """
+    :param list_of_dicts_in:
+    :return:
+    """
+    # return [student for student in list_of_dicts_in if
+    #         (dt.strftime(student["ADMEnrlDtTxt"], "mmddyyyy") > dt.strftime(str(student["ADMEndDtTxt"]), "mmddyyyy"))]
+    for student in list_of_dicts_in:
+        enroll_date = student["ADMEnrlDtTxt"]
+        end_date = student["ADMEndDtTxt"]
 
 
 

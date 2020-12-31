@@ -51,6 +51,9 @@ def main():
     print("records with no attendance")
     adm_library.check_for_no_att(list_of_dicts)
 
+    print("records with enrolled date after end date")
+    adm_library.enrolled_after_end(list_of_dicts)
+
 
 if __name__ == '__main__':
     main()
