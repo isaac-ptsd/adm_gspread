@@ -15,6 +15,8 @@ import pprint
 
 def main():
     list_of_dicts = adm.gen_list_of_dicts()
+
+    print("\nChecking for duplicate records (excluding program type 2):")
     adm.add_wsheet(adm.check_non_type2_dups(list_of_dicts), "duplicates_exclude_type2")
 
     print("\nChecking for SpEd Students:")
@@ -48,10 +50,10 @@ def main():
     print("\nComparing student count to calculated ADM amount:")
     adm.compare_calcadm_school_counts(list_of_dicts)
 
-    print("records with no attendance")
-    adm.check_for_no_att(list_of_dicts)
+    print("\nChecking for records with no attendance:")
+    adm.add_wsheet(adm.check_for_no_att(list_of_dicts), "No_Attendance_Data")
 
-    print("records with enrolled date after end date")
+    print("\nChecking for records with enrolled date after end date:")
     time.sleep(2)
     adm.enrolled_after_end(list_of_dicts)
 

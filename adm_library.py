@@ -5,8 +5,7 @@ import csv
 import time
 from datetime import datetime as dt
 
-
-sheet_key = '1sfc8yxPVzB0fmSD_rj18NaghfhxXiBCahcQgupsgpOU'  # 2nd period adm
+sheet_key = '1ODfFFt6bjs34QPR-KPZ3A08SQJbYugzICLSG8rXwmME'  # 2nd period adm
 # authorize, and open a google spreadsheet
 gc = gspread.oauth()
 sh: Spreadsheet = gc.open_by_key(sheet_key)
@@ -97,9 +96,9 @@ def find_all_missing_data(list_of_dicts_in, column_list_to_check=["ChkDigitStdnt
     # remove duplicates from the returned list
     ret_val = [i for n, i in enumerate(missing_val_list) if i not in missing_val_list[n + 1:]]
     if ret_val:
-        print("\nRECORDS MISSING DATA FOUND")
+        print("RECORDS MISSING DATA FOUND")
     else:
-        print("\nNO RECORDS MISSING DATA FOUND")
+        print("NO RECORDS MISSING DATA FOUND")
     return ret_val
 
 
@@ -130,8 +129,9 @@ def find_attendance_anomalies(list_of_dicts_in):
     """
     ret_val = []
     for x in list_of_dicts_in:
-        if x['ADMSessDays'] != ((x['ADMPrsntDays'] + x['ADMAbsntDays']) / 10):
-            ret_val.append(x)
+        if x['ADMProgTypCd'] != 10:
+            if x['ADMSessDays'] != ((x['ADMPrsntDays'] + x['ADMAbsntDays']) / 10):
+                ret_val.append(x)
     return ret_val
 
 
@@ -141,10 +141,10 @@ def check_admprog_type_2(list_of_dicts_in):
     :return: bool
     """
     if list(filter(lambda type2: type2['ADMProgTypCd'] == 2, list_of_dicts_in)):
-        print("\nADM PROGRAM TYPE 2 RECORDS ARE PRESENT")
+        print("ADM PROGRAM TYPE 2 RECORDS ARE PRESENT")
         return True
     else:
-        print("\nADM PROGRAM TYPE 2 RECORDS ARE NOT PRESENT")
+        print("ADM PROGRAM TYPE 2 RECORDS ARE NOT PRESENT")
         return False
 
 
@@ -154,10 +154,10 @@ def check_admprog_type_14(list_of_dicts_in):
     :return: no return value; will print results to stdout
     """
     if list(filter(lambda type14: type14['ADMProgTypCd'] == 14, list_of_dicts_in)):
-        print("\nADM PROGRAM TYPE 14 RECORDS ARE PRESENT")
+        print("ADM PROGRAM TYPE 14 RECORDS ARE PRESENT")
         return True
     else:
-        print("\nADM PROGRAM TYPE 14 RECORDS ARE NOT PRESENT")
+        print("ADM PROGRAM TYPE 14 RECORDS ARE NOT PRESENT")
         return False
 
 
@@ -171,10 +171,10 @@ def check_econ_flag_k8(list_of_dicts_in):
     k8_w_N_list = list(filter(lambda econ_check: econ_check['EconDsvntgFg'] != 'Y', k_8_list))
 
     if k8_w_N_list:
-        print("\nK-8 students with EconDsvntgFg not set to 'Y' are PRESENT")
+        print("K-8 students with EconDsvntgFg not set to 'Y' are PRESENT")
         return k8_w_N_list
     else:
-        print("\nK-8 students with EconDsvntgFg not set to 'Y' are NOT PRESENT")
+        print("K-8 students with EconDsvntgFg not set to 'Y' are NOT PRESENT")
 
 
 def check_eth_flags(list_of_dicts_in):
@@ -189,10 +189,10 @@ def check_eth_flags(list_of_dicts_in):
         if flag_comp == "NNNNNN":
             no_eth_flag_set.append(x)
     if no_eth_flag_set:
-        print("\nSTUDENTS WITHOUT AN ETHNIC FLAG SET WERE FOUND")
+        print("STUDENTS WITHOUT AN ETHNIC FLAG SET WERE FOUND")
         return no_eth_flag_set
     else:
-        print("\nSTUDENTS WITHOUT AN ETHNIC FLAG SET WERE *NOT* FOUND")
+        print("STUDENTS WITHOUT AN ETHNIC FLAG SET WERE *NOT* FOUND")
 
 
 def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.us'):
@@ -218,15 +218,13 @@ def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.
                 flattened_test_data.append(row[column])
         for i, cell in enumerate(cell_range):
             cell.value = flattened_test_data[i]
-        print("cell range: ", len(cell_range))
-        print("cell_range: ", cell_range)
         sheet.update_cells(cell_range)
     except TypeError as e:
-        print("\nERROR in function: add_wsheet ", e)
+        print("Worksheet not created - no data", e)
     except IndexError as e:
         print("\nERROR in function: add_wsheet ", e)
-    # except gspread.exceptions.APIError as e:
-    #     print("ERROR in function: add_wsheet ", e)
+    except gspread.exceptions.APIError as e:
+        print("ERROR ADDING WORKSHEET: ", e)
 
 
 # check that records where ELFg = y, also have a program type 2 record
@@ -259,19 +257,21 @@ def calculate_update_calcadmamt(list_of_dicts_in):
     """
     student_amd_calc = []
     for student in list_of_dicts_in:
-        if student["ADMPrsntDays"] != 0 or \
-                student["ADMAbsntDays"] != 0 and \
-                student["ADMSessDays"] != 0 and \
-                student["ADMFTE"] != 0:
+        if ((student["ADMPrsntDays"] != 0 or
+             student["ADMAbsntDays"] != 0) and
+                student["ADMSessDays"] != 0 and
+                student["ADMFTE"] != 0 and
+                student["ADMInstrctHrs"] == 0):
             student_amd_calc.append(
-                ((int(student["ADMPrsntDays"]) + int(student["ADMAbsntDays"])) / int(student["ADMSessDays"])) / int(
-                    student["ADMFTE"]))
+                ((int(student["ADMPrsntDays"]) + int(student["ADMAbsntDays"])) / int(student["ADMSessDays"])) /
+                int(student["ADMFTE"]))
         else:
             student_amd_calc.append(0)
     cell_list = worksheet.range('CC2:CC' + str(worksheet.row_count))
     for i, val in enumerate(student_amd_calc):
         cell_list[i].value = val
     worksheet.update_cells(cell_list)
+    print("ADM amount calculated and written to sheet")
     return student_amd_calc
 
 
@@ -294,7 +294,8 @@ def compare_calcadm_school_counts(list_of_dicts_in):
                 sum_cal += s["CalcADMAmt"]
                 s_error_reporting = s
             print(
-                "\nStudent count " + str(370 + i) + ": " + str(len(students_list)) + " -- Sum CalcADMAmt: " + str(sum_cal))
+                "Student count " + str(370 + i) + ": " + str(len(students_list)) + " -- Sum CalcADMAmt: " + str(
+                    sum_cal))
             i += 1
     except TypeError as e:
         print("ERROR: ", e)
@@ -352,9 +353,14 @@ def gen_list_of_dicts():
 def check_for_no_att(list_of_dicts_in):
     """
     :param list_of_dicts_in:
-    :return: returns all records that have no attendance
+    :return: returns all records that have no days present
     """
-    return [student for student in list_of_dicts_in if (student["ADMPrsntDays"] == 0)]
+    list_no_att = [student for student in list_of_dicts_in if (student["ADMPrsntDays"] == 0)]
+    if list_no_att:
+        print("Records with no attendance found")
+    else:
+        print("Records with no attendance not found")
+    return list_no_att
 
 
 def enrolled_after_end(list_of_dicts_in):
@@ -367,6 +373,3 @@ def enrolled_after_end(list_of_dicts_in):
     for student in list_of_dicts_in:
         enroll_date = student["ADMEnrlDtTxt"]
         end_date = student["ADMEndDtTxt"]
-
-
-
