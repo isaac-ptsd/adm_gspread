@@ -20,6 +20,7 @@ def find_missing_data(list_of_dicts_in, column_name_to_check):
             column_name_to_check; this is the column the function checks for missing data
         Returns: list
             list of worksheet rows; one row of complete ADM data for each record missing data in the specified column
+        Called by: find_all_missing_data()
     """
     return list(filter(lambda missing: missing[column_name_to_check] == '', list_of_dicts_in))
 
@@ -243,7 +244,7 @@ def check_elfg(list_of_dicts_in):
             list_diff.append(stu_1)
     if len(list_diff) > 0:
         # todo: this breaks when list_diff has one element
-        print(list_diff)
+        print("Records missing corresponding program type 2 found")
         return list_diff
     else:
         print("<=0")
@@ -342,6 +343,8 @@ def check_non_type2_dups(list_of_dicts_in):
                 count += 1
         if count > 1:
             duplicate_records.append(i)
+    if duplicate_records:
+        print("")
     return duplicate_records
 
 
@@ -368,8 +371,27 @@ def enrolled_after_end(list_of_dicts_in):
     :param list_of_dicts_in:
     :return:
     """
-    # return [student for student in list_of_dicts_in if
-    #         (dt.strftime(student["ADMEnrlDtTxt"], "mmddyyyy") > dt.strftime(str(student["ADMEndDtTxt"]), "mmddyyyy"))]
+    list_bad_dates = []
     for student in list_of_dicts_in:
-        enroll_date = student["ADMEnrlDtTxt"]
-        end_date = student["ADMEndDtTxt"]
+        enroll_date = str(student["ADMEnrlDtTxt"])
+        end_date = str(student["ADMEndDtTxt"])
+
+        if len(enroll_date) >= 8:
+            enr_dt = dt(month=int(enroll_date[0:2]), day=int(enroll_date[2:4]), year=int(enroll_date[4:8]))
+        else:
+            enr_dt = dt(month=int(enroll_date[0:1]), day=int(enroll_date[1:3]), year=int(enroll_date[3:7]))
+
+        if len(end_date) >= 8:
+            end_dt = dt(month=int(end_date[0:2]), day=int(end_date[2:4]), year=int(end_date[4:8]))
+        else:
+            end_dt = dt(month=int(end_date[0:1]), day=int(end_date[1:3]), year=int(end_date[3:7]))
+
+        if enr_dt >= end_dt:
+            list_bad_dates.append(student)
+    if list_bad_dates:
+        print("Records with enroll_dates >= end_dates found")
+    else:
+        print("Records with enroll_dates >= end_dates not found")
+    return list_bad_dates
+
+

@@ -48,14 +48,14 @@ def main():
     adm.add_wsheet(adm.check_elfg(list_of_dicts), "no_matching_ADMProgTypCd2")
 
     print("\nComparing student count to calculated ADM amount:")
+    time.sleep(2)  # ensures adm amount has been writen to google sheet
     adm.compare_calcadm_school_counts(list_of_dicts)
 
     print("\nChecking for records with no attendance:")
     adm.add_wsheet(adm.check_for_no_att(list_of_dicts), "No_Attendance_Data")
 
     print("\nChecking for records with enrolled date after end date:")
-    time.sleep(2)
-    adm.enrolled_after_end(list_of_dicts)
+    adm.add_wsheet(adm.enrolled_after_end(list_of_dicts), "End Date greater than or equal to Enroll Date")
 
 
 if __name__ == '__main__':
