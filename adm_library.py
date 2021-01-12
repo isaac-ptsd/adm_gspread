@@ -5,11 +5,35 @@ import csv
 import time
 from datetime import datetime as dt
 
-sheet_key = '1ODfFFt6bjs34QPR-KPZ3A08SQJbYugzICLSG8rXwmME'  # 2nd period adm
+sheet_key = '1ODfFFt6bjs34QPR-KPZ3A08SQJbYugzICLSG8rXwmME'  # 2nd period adm COPY for testing
 # authorize, and open a google spreadsheet
 gc = gspread.oauth()
 sh: Spreadsheet = gc.open_by_key(sheet_key)
 worksheet = sh.sheet1
+
+# TODO: Errors from upload:
+#   * missing implicit 0 from days present/absent
+#   * Invalid Date: The value provided must be a date in the format MMDDYYYY
+#   * High School Entry School Year is Required for Secondary Students
+#   *
+
+
+def validate_present_absent_days(list_of_dicts_in):
+    list_bad_days = []
+    try:
+        list_bad_days = [student for student in list_of_dicts_in
+                         if student["ADMPrsntDays"] != '' if (int(student["ADMPrsntDays"]) % 10 != 0)]
+        list_bad_days.append(
+            [student for student in list_of_dicts_in
+             if student["ADMAbsntDays"] != '' if (int(student["ADMAbsntDays"]) % 10 != 0)]
+        )
+    except Exception as e:
+        print("Exception: ", e)
+    if list_bad_days:
+        print("Days present/absent missing implicit 0 were found!")
+    else:
+        print("Days present/absent missing implicit 0 were not found!")
+    return list_bad_days
 
 
 def find_missing_data(list_of_dicts_in, column_name_to_check):
@@ -90,7 +114,6 @@ def find_all_missing_data(list_of_dicts_in, column_list_to_check=["ChkDigitStdnt
         Returns: list
              list of worksheet rows; one row of complete ADM data for each record missing data in the specified column
      """
-    # todo: Bug when list of one element
     missing_val_list = []
     for name in column_list_to_check:
         missing_val_list += find_missing_data(list_of_dicts_in, name)
@@ -133,6 +156,10 @@ def find_attendance_anomalies(list_of_dicts_in):
         if x['ADMProgTypCd'] != 10:
             if x['ADMSessDays'] != ((x['ADMPrsntDays'] + x['ADMAbsntDays']) / 10):
                 ret_val.append(x)
+    if ret_val:
+        print("Attendance anomalies found")
+    else:
+        print("Attendance anomalies not found!")
     return ret_val
 
 
@@ -209,7 +236,8 @@ def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.
             headers = list(data_in[0].keys())
         else:
             headers = list(data_in.keys())
-        sheet = sh.add_worksheet(sheet_name, len(data_in), len(headers))
+        # +1 fixes bug when data_in has only one record
+        sheet = sh.add_worksheet(sheet_name, len(data_in) + 1, len(headers))
         sheet.append_row(headers)
         last_cell = gspread.utils.rowcol_to_a1(len(data_in), len(headers))
         cell_range = sheet.range('A2:' + last_cell)
@@ -243,11 +271,10 @@ def check_elfg(list_of_dicts_in):
         if not any(stu_2["DistStdntID"] == stu_1["DistStdntID"] for stu_2 in type_2):
             list_diff.append(stu_1)
     if len(list_diff) > 0:
-        # todo: this breaks when list_diff has one element
         print("Records missing corresponding program type 2 found")
         return list_diff
     else:
-        print("<=0")
+        print("Records missing corresponding program type 2 were not found")
 
 
 def calculate_update_calcadmamt(list_of_dicts_in):
@@ -307,6 +334,7 @@ def generate_sped_list(list_of_dicts_in):
     """
     :param list_of_dicts_in:
     :return: List of students with SpEdFg == 'Y'
+    Called by: find_no_dup_sped()
     """
     return [student for student in list_of_dicts_in if (student["SpEdFg"] == 'Y')]
 
@@ -316,8 +344,11 @@ def find_no_dup_sped(list_of_dicts_in):
     :param list_of_dicts_in:
     :return: list of SpEd students who have only 1 record in the ADM
     """
-    # sped_list = [student for student in list_of_dicts_in if (student["SpEdFg"] == 'Y')]
     sped_list = generate_sped_list(list_of_dicts_in)
+    if sped_list:
+        print("SpEd records found")
+    else:
+        print("SpEd RECORDS NOT FOUND!!!!!!!")
     no_dup = []
     for i in sped_list:
         count = 0
@@ -393,5 +424,3 @@ def enrolled_after_end(list_of_dicts_in):
     else:
         print("Records with enroll_dates >= end_dates not found")
     return list_bad_dates
-
-

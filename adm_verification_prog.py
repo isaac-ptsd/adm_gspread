@@ -14,48 +14,55 @@ import pprint
 
 
 def main():
+    # print("\nDid you run the \"Refresh Attendance Views Data\" function!?!?!?!?!?!\n\n")
+    # time.sleep(4)
+    #
     list_of_dicts = adm.gen_list_of_dicts()
+    #
+    # print("\nChecking for duplicate records (excluding program type 2):")
+    # adm.add_wsheet(adm.check_non_type2_dups(list_of_dicts), "duplicates_exclude_type2")
+    #
+    # print("\nChecking for SpEd Students:")
+    # adm.add_wsheet(adm.generate_sped_list(list_of_dicts), "SpEd_students")
+    # # adm.add_wsheet(adm.find_no_dup_sped(list_of_dicts), "SpEd_no_dup_record")
+    # # SpEd records do not need a second record
+    #
+    # print("\nCalculating ADM Amount:")
+    # adm.calculate_update_calcadmamt(list_of_dicts)
 
-    print("\nChecking for duplicate records (excluding program type 2):")
-    adm.add_wsheet(adm.check_non_type2_dups(list_of_dicts), "duplicates_exclude_type2")
+    # print("\nChecking for missing data:")
+    # adm.add_wsheet(adm.find_all_missing_data(list_of_dicts), "records_missing_data")
 
-    print("\nChecking for SpEd Students:")
-    adm.add_wsheet(adm.generate_sped_list(list_of_dicts), "SpEd_students")
-    adm.add_wsheet(adm.find_no_dup_sped(list_of_dicts), "SpEd_no_dup_record")
+    # print("\nChecking ethnic flags:")
+    # adm.add_wsheet(adm.check_eth_flags(list_of_dicts), "missing_eht_flag")
 
-    print("\nCalculating ADM Amount:")
-    adm.calculate_update_calcadmamt(list_of_dicts)
+    # print("\nChecking KG - 8 for econ EconDsvntgFg set to 'Y':")
+    # adm.add_wsheet(adm.check_econ_flag_k8(list_of_dicts), "k8_N_econ_flag")
 
-    print("\nChecking for missing data:")
-    adm.add_wsheet(adm.find_all_missing_data(list_of_dicts), "records_missing_data")
+    # print("\nChecking for attendance anomalies:")
+    # adm.add_wsheet(adm.find_attendance_anomalies(list_of_dicts), "attendance_anomalies")
 
-    print("\nChecking ethnic flags:")
-    adm.add_wsheet(adm.check_eth_flags(list_of_dicts), "missing_eht_flag")
+    # print("\nChecking for ADM program type 14 students:")
+    # adm.check_admprog_type_14(list_of_dicts)
+    #
+    # print("\nChecking for ADM program type 2 students:")
+    # adm.check_admprog_type_2(list_of_dicts)
 
-    print("\nChecking KG - 8 for econ EconDsvntgFg set to 'Y':")
-    adm.add_wsheet(adm.check_econ_flag_k8(list_of_dicts), "k8_N_econ_flag")
+    # print("\nChecking for type 2 matches:")
+    # adm.add_wsheet(adm.check_elfg(list_of_dicts), "no_matching_ADMProgTypCd2")
 
-    print("\nChecking for attendance anomalies:")
-    adm.add_wsheet(adm.find_attendance_anomalies(list_of_dicts), "attendance_anomalies")
+    # print("\nComparing student count to calculated ADM amount:")
+    # time.sleep(4)  # ensures adm amount has been writen to google sheet
+    # adm.compare_calcadm_school_counts(list_of_dicts)
 
-    print("\nChecking for ADM program type 14 students:")
-    adm.check_admprog_type_14(list_of_dicts)
+    # print("\nChecking for records with no attendance:")
+    # adm.add_wsheet(adm.check_for_no_att(list_of_dicts), "No_Attendance_Data")
 
-    print("\nChecking for ADM program type 2 students:")
-    adm.check_admprog_type_2(list_of_dicts)
+    # print("\nChecking for records with enrolled date after end date:")
+    # adm.add_wsheet(adm.enrolled_after_end(list_of_dicts), "End Date greater than or equal to Enroll Date")
 
-    print("\nChecking for type 2 matches:")
-    adm.add_wsheet(adm.check_elfg(list_of_dicts), "no_matching_ADMProgTypCd2")
-
-    print("\nComparing student count to calculated ADM amount:")
-    time.sleep(2)  # ensures adm amount has been writen to google sheet
-    adm.compare_calcadm_school_counts(list_of_dicts)
-
-    print("\nChecking for records with no attendance:")
-    adm.add_wsheet(adm.check_for_no_att(list_of_dicts), "No_Attendance_Data")
-
-    print("\nChecking for records with enrolled date after end date:")
-    adm.add_wsheet(adm.enrolled_after_end(list_of_dicts), "End Date greater than or equal to Enroll Date")
+    print("Checking for missing implicit 0's")
+    adm.add_wsheet(adm.validate_present_absent_days(list_of_dicts), "bad days")
 
 
 if __name__ == '__main__':
