@@ -5,34 +5,31 @@ import csv
 import time
 from datetime import datetime as dt
 
-sheet_key = '1ODfFFt6bjs34QPR-KPZ3A08SQJbYugzICLSG8rXwmME'  # 2nd period adm COPY for testing
+sheet_key = '1i2IPOdwOAMinDGmN8akxYLZLR2NRuitXh0ImUZMVD4A'  # P1 ADM Additions
 # authorize, and open a google spreadsheet
 gc = gspread.oauth()
 sh: Spreadsheet = gc.open_by_key(sheet_key)
 worksheet = sh.sheet1
 
 # TODO: Errors from upload:
-#   * missing implicit 0 from days present/absent
 #   * Invalid Date: The value provided must be a date in the format MMDDYYYY
 #   * High School Entry School Year is Required for Secondary Students
-#   *
 
 
 def validate_present_absent_days(list_of_dicts_in):
     list_bad_days = []
-    try:
-        list_bad_days = [student for student in list_of_dicts_in
-                         if student["ADMPrsntDays"] != '' if (int(student["ADMPrsntDays"]) % 10 != 0)]
-        list_bad_days.append(
-            [student for student in list_of_dicts_in
-             if student["ADMAbsntDays"] != '' if (int(student["ADMAbsntDays"]) % 10 != 0)]
-        )
-    except Exception as e:
-        print("Exception: ", e)
+    for student in list_of_dicts_in:
+        if student["ADMPrsntDays"] != '':
+            if int(student["ADMPrsntDays"]) % 10 != 0:
+                list_bad_days.append(student)
+        if student["ADMAbsntDays"] != '':
+            if int(student["ADMAbsntDays"]) % 10 != 0:
+                list_bad_days.append(student)
+
     if list_bad_days:
-        print("Days present/absent missing implicit 0 were found!")
+        print("Days present/absent missing implicit the 0 were found!")
     else:
-        print("Days present/absent missing implicit 0 were not found!")
+        print("Days present/absent missing implicit the 0 were NOT found!")
     return list_bad_days
 
 
@@ -231,29 +228,32 @@ def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.
     :return: No return value
              Will add a new worksheet to the spreadsheet
     """
-    try:
-        if data_in[0]:
-            headers = list(data_in[0].keys())
-        else:
-            headers = list(data_in.keys())
-        # +1 fixes bug when data_in has only one record
-        sheet = sh.add_worksheet(sheet_name, len(data_in) + 1, len(headers))
-        sheet.append_row(headers)
-        last_cell = gspread.utils.rowcol_to_a1(len(data_in), len(headers))
-        cell_range = sheet.range('A2:' + last_cell)
-        flattened_test_data = []
-        for row in data_in:
-            for column in headers:
-                flattened_test_data.append(row[column])
-        for i, cell in enumerate(cell_range):
-            cell.value = flattened_test_data[i]
-        sheet.update_cells(cell_range)
-    except TypeError as e:
-        print("Worksheet not created - no data", e)
-    except IndexError as e:
-        print("\nERROR in function: add_wsheet ", e)
-    except gspread.exceptions.APIError as e:
-        print("ERROR ADDING WORKSHEET: ", e)
+    if not data_in:
+        print("add_wsheet: data_in is empty; will not attempt to add to worksheet")
+    else:
+        try:
+            if data_in[0]:
+                headers = list(data_in[0].keys())
+            else:
+                headers = list(data_in.keys())
+            # +1 fixes bug when data_in has only one record
+            sheet = sh.add_worksheet(sheet_name, len(data_in) + 1, len(headers))
+            sheet.append_row(headers)
+            last_cell = gspread.utils.rowcol_to_a1(len(data_in), len(headers))
+            cell_range = sheet.range('A2:' + last_cell)
+            flattened_test_data = []
+            for row in data_in:
+                for column in headers:
+                    flattened_test_data.append(row[column])
+            for i, cell in enumerate(cell_range):
+                cell.value = flattened_test_data[i]
+            sheet.update_cells(cell_range)
+        except TypeError as e:
+            print("Worksheet not created - no data", e)
+        except IndexError as e:
+            print("\nERROR in function: add_wsheet ", e)
+        except gspread.exceptions.APIError as e:
+            print("ERROR ADDING WORKSHEET: ", e)
 
 
 # check that records where ELFg = y, also have a program type 2 record
@@ -304,6 +304,7 @@ def calculate_update_calcadmamt(list_of_dicts_in):
 
 
 def compare_calcadm_school_counts(list_of_dicts_in):
+    # todo: verify count should only be progam type 1 (I have a hunch I need to count all types)
     """
     :param list_of_dicts_in:
     :return: no return value will print to stdout a comparison of the ADM amount and school attendance numbers
@@ -336,28 +337,34 @@ def generate_sped_list(list_of_dicts_in):
     :return: List of students with SpEdFg == 'Y'
     Called by: find_no_dup_sped()
     """
-    return [student for student in list_of_dicts_in if (student["SpEdFg"] == 'Y')]
-
-
-def find_no_dup_sped(list_of_dicts_in):
-    """
-    :param list_of_dicts_in:
-    :return: list of SpEd students who have only 1 record in the ADM
-    """
-    sped_list = generate_sped_list(list_of_dicts_in)
+    sped_list = [student for student in list_of_dicts_in if (student["SpEdFg"] == 'Y')]
     if sped_list:
         print("SpEd records found")
     else:
         print("SpEd RECORDS NOT FOUND!!!!!!!")
-    no_dup = []
-    for i in sped_list:
-        count = 0
-        for j in sped_list:
-            if i["DistStdntID"] == j["DistStdntID"]:
-                count += 1
-        if count == 1:
-            no_dup.append(i)
-    return no_dup
+    return sped_list
+
+
+# def find_no_dup_sped(list_of_dicts_in):
+#     # todo: remove this function - sped students only require one record on the adm
+#     """
+#     :param list_of_dicts_in:
+#     :return: list of SpEd students who have only 1 record in the ADM
+#     """
+#     sped_list = generate_sped_list(list_of_dicts_in)
+#     if sped_list:
+#         print("SpEd records found")
+#     else:
+#         print("SpEd RECORDS NOT FOUND!!!!!!!")
+#     no_dup = []
+#     for i in sped_list:
+#         count = 0
+#         for j in sped_list:
+#             if i["DistStdntID"] == j["DistStdntID"]:
+#                 count += 1
+#         if count == 1:
+#             no_dup.append(i)
+#     return no_dup
 
 
 def check_non_type2_dups(list_of_dicts_in):
@@ -375,7 +382,9 @@ def check_non_type2_dups(list_of_dicts_in):
         if count > 1:
             duplicate_records.append(i)
     if duplicate_records:
-        print("")
+        print("Duplicates (excluding program type 2) were found")
+    else:
+        print("Duplicates (excluding program type 2) were NOT found")
     return duplicate_records
 
 
