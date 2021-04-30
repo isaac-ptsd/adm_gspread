@@ -11,12 +11,33 @@ gc = gspread.oauth()
 sh: Spreadsheet = gc.open_by_key(sheet_key)
 worksheet = sh.sheet1
 
-# TODO: Errors from upload:
-#   * Invalid Date: The value provided must be a date in the format MMDDYYYY
-#   * High School Entry School Year is Required for Secondary Students
+
+# TODO:
+#   -> check/validate program type 10; enrollment cannot overlap with type 1 record.
+def type_10_enrollment_validation(list_of_dicts_in):
+    """
+    :param list_of_dicts_in:
+    :return:
+    """
+    type_10_list = [student for student in list_of_dicts_in if (student["ADMProgTypCd"] == 10)]
+    for student in type_10_list:
+        other_prog_types = [s for s in list_of_dicts_in if ((s["ADMProgTypCd"] != 10)
+                                                            and (student["DistStdntID"] == s["DistStdntID"]))]
+        if other_prog_types:
+            for other_prog_stu in other_prog_types:
+                # (EndA <= StartB or StartA >= EndB)
+                if (student["ADMEndDtTxt"] <= other_prog_stu["ADMEnrlDtTxt"] or
+                        student["ADMEnrlDtTxt"] >= other_prog_stu["ADMEndDtTxt"]):
+                    print("Overlapping type 10 records found")
+                else:
+                    print("Overlapping type 10 records NOT found")
 
 
 def validate_present_absent_days(list_of_dicts_in):
+    """
+    :param list_of_dicts_in:
+    :return:
+    """
     list_bad_days = []
     for student in list_of_dicts_in:
         if student["ADMPrsntDays"] != '':

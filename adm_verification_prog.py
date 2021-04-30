@@ -6,12 +6,6 @@ import csv
 import time
 import pprint
 
-# TODO:
-#   -> Add function that checks for records that have 0 attendance. - exclude record type 2, and 14(?)
-#       -> add to attendance anomalies function?
-#   -> check for enrolled date after end date
-#   -> check/validate program type 10; enrollment cannot overlap with type 1 record.
-
 
 def main():
     # print("\nDid you run the \"Refresh Attendance Views Data\" function!?!?!?!?!?!\n\n")
