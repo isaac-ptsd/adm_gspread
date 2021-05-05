@@ -5,7 +5,7 @@ import csv
 import time
 from datetime import datetime as dt
 
-sheet_key = '1i2IPOdwOAMinDGmN8akxYLZLR2NRuitXh0ImUZMVD4A'  # P1 ADM Additions
+sheet_key = '1e3kCzG2dZ_t1r17IsoJfbYmj0rG2QbHTntXDyPO1kYc'  # P3 ADM
 # authorize, and open a google spreadsheet
 gc = gspread.oauth()
 sh: Spreadsheet = gc.open_by_key(sheet_key)
@@ -350,6 +350,15 @@ def compare_calcadm_school_counts(list_of_dicts_in):
     except TypeError as e:
         print("ERROR: ", e)
         print("Record: ", s_error_reporting)
+    i = 0
+    for record in list_of_dicts_in:
+        while i < 5:
+            sum_adm_amt = 0
+            school_list = [student for student in list_of_dicts_in if (student["ResdSchlInstID"] == 370 + i)]
+            for r in school_list:
+                sum_adm_amt += r["CalcADMAmt"]
+            print("school: " + str(370 + i) + " all prog CalcADMAmt: " + str(sum_adm_amt))
+            i += 1
 
 
 def generate_sped_list(list_of_dicts_in):
