@@ -5,11 +5,14 @@ import csv
 import time
 from datetime import datetime as dt
 
-sheet_key = '1e3kCzG2dZ_t1r17IsoJfbYmj0rG2QbHTntXDyPO1kYc'  # P3 ADM
+sheet_key = '1JM22JTUJOt3r1fj9LrH1ue7zkzDg7ArFG2jHuQ5TJEk'  # Annual ADM
 # authorize, and open a google spreadsheet
 gc = gspread.oauth()
 sh: Spreadsheet = gc.open_by_key(sheet_key)
 worksheet = sh.sheet1
+
+# TODO:
+#   -> check for transition students (school id = 374)
 
 
 # TODO:
@@ -67,6 +70,7 @@ def find_missing_data(list_of_dicts_in, column_name_to_check):
     return list(filter(lambda missing: missing[column_name_to_check] == '', list_of_dicts_in))
 
 
+# todo: update so that program 10's do not need attendance data
 def find_all_missing_data(list_of_dicts_in, column_list_to_check=["ChkDigitStdntID",
                                                                   "DistStdntID",
                                                                   "ResdDistInstID",
@@ -330,35 +334,24 @@ def compare_calcadm_school_counts(list_of_dicts_in):
     :param list_of_dicts_in:
     :return: no return value will print to stdout a comparison of the ADM amount and school attendance numbers
     """
-    time.sleep(1)
     type_1 = list(filter(lambda prog2_check: prog2_check['ADMProgTypCd'] == 1, list_of_dicts_in))
 
     i = 0
-    try:
-        while i < 5:
-            students_list = [student for student in type_1 if (student["ResdSchlInstID"] == 370 + i)]
-            # sum_cal = sum([s["CalcADMAmt"] for s in students_list])
-            sum_cal = 0
-            s_error_reporting = ()
-            for s in students_list:
-                sum_cal += s["CalcADMAmt"]
-                s_error_reporting = s
-            print(
-                "Student count " + str(370 + i) + ": " + str(len(students_list)) + " -- Sum CalcADMAmt: " + str(
-                    sum_cal))
-            i += 1
-    except TypeError as e:
-        print("ERROR: ", e)
-        print("Record: ", s_error_reporting)
+    while i < 5:
+        students_list = [student for student in type_1 if (student["ResdSchlInstID"] == 370 + i)]
+        # get a list of unique student numbers and convert to set to get number of students
+        stud_num_set_len = len(set([student["DistStdntID"] for student in students_list]))
+        print("school: " + str(370 + i) + " student count: " + str(stud_num_set_len))
+        i += 1
+
     i = 0
-    for record in list_of_dicts_in:
-        while i < 5:
-            sum_adm_amt = 0
-            school_list = [student for student in list_of_dicts_in if (student["ResdSchlInstID"] == 370 + i)]
-            for r in school_list:
-                sum_adm_amt += r["CalcADMAmt"]
-            print("school: " + str(370 + i) + " all prog CalcADMAmt: " + str(sum_adm_amt))
-            i += 1
+    while i < 5:
+        sum_adm_amt = 0
+        school_list = [student for student in list_of_dicts_in if (student["ResdSchlInstID"] == 370 + i)]
+        for r in school_list:
+            sum_adm_amt += r["CalcADMAmt"]
+        print("school: " + str(370 + i) + " all prog CalcADMAmt: " + str(sum_adm_amt))
+        i += 1
 
 
 def generate_sped_list(list_of_dicts_in):

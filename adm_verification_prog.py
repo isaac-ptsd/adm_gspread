@@ -18,7 +18,7 @@ def main():
     #
     # print("\nChecking for SpEd Students:")
     # adm.add_wsheet(adm.generate_sped_list(list_of_dicts), "SpEd_students")
-
+    #
     # print("\nChecking for missing data:")
     # adm.add_wsheet(adm.find_all_missing_data(list_of_dicts), "records_missing_data")
     #
@@ -39,7 +39,7 @@ def main():
     #
     # print("\nChecking for type 2 matches:")
     # adm.add_wsheet(adm.check_elfg(list_of_dicts), "no_matching_ADMProgTypCd2")
-
+    #
     # print("\nChecking for records with no attendance:")
     # adm.add_wsheet(adm.check_for_no_att(list_of_dicts), "No_Attendance_Data")
     #
@@ -48,12 +48,12 @@ def main():
     #
     # print("Checking for missing implicit 0's")
     # adm.add_wsheet(adm.validate_present_absent_days(list_of_dicts), "bad days")
-
+    #
     # print("\nCalculating ADM Amount:")
     # adm.calculate_update_calcadmamt(list_of_dicts)
-
-    print("\nComparing student count to calculated ADM amount:")
-    time.sleep(4)  # ensures adm amount has been writen to google sheet
+    #
+    # print("\nComparing student count to calculated ADM amount:")
+    # time.sleep(4)  # ensures adm amount has been writen to google sheet
     adm.compare_calcadm_school_counts(list_of_dicts)
 
 
