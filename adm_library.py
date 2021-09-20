@@ -432,7 +432,7 @@ def check_for_no_att(list_of_dicts_in):
 def enrolled_after_end(list_of_dicts_in):
     """
     :param list_of_dicts_in:
-    :return:
+    :return: returns all records that have end dates that are earlier than enrollments dates.
     """
     list_bad_dates = []
     for student in list_of_dicts_in:
