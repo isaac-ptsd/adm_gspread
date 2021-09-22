@@ -329,7 +329,6 @@ def calculate_update_calcadmamt(list_of_dicts_in):
 
 
 def compare_calcadm_school_counts(list_of_dicts_in):
-    # todo: verify count should only be progam type 1 (I have a hunch I need to count all types)
     """
     :param list_of_dicts_in:
     :return: no return value will print to stdout a comparison of the ADM amount and school attendance numbers
