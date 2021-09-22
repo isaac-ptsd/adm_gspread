@@ -5,7 +5,7 @@ For authorization set up see: https://gspread.readthedocs.io/en/latest/oauth2.ht
 This script makes heavy use of the gspread python library
 gspread documentation: https://gspread.readthedocs.io/en/latest/index.html
 
-This script will automate some of the tedious work required to verify data in an ADM.
+This script will automate some tedious work required to verify data in an ADM.
 
 Functions available:
 
