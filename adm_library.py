@@ -2,38 +2,37 @@ import gspread
 from gspread import Spreadsheet
 from gspread import utils
 import csv
-import time
+from itertools import groupby
+from operator import itemgetter
 from datetime import datetime as dt
 
-sheet_key = '13GifvO8ptOvitBBZpih3tdZRsWyuBkIjbDDDtfyPbo4'  # Annual ADM
+sheet_key = '1aHClb4Q_o6uaVuWB61OsZqDYjeK9s_jKeho1ofAAmAU'  # Annual ADM
 # authorize, and open a google spreadsheet
 gc = gspread.oauth()
 sh: Spreadsheet = gc.open_by_key(sheet_key)
 worksheet = sh.sheet1
 
 # TODO:
-#   -> check for transition students (school id = 374)
+#   -> check for transition students (school id = 376)
+#   Note: these students must be submitted with school id = 374
 
 
-# TODO:
-#   -> check/validate program type 10; enrollment cannot overlap with type 1 record.
 def type_10_enrollment_validation(list_of_dicts_in):
     """
     :param list_of_dicts_in:
     :return:
     """
+    overlap_found = False
     type_10_list = [student for student in list_of_dicts_in if (student["ADMProgTypCd"] == 10)]
-    for student in type_10_list:
-        other_prog_types = [s for s in list_of_dicts_in if ((s["ADMProgTypCd"] != 10)
-                                                            and (student["DistStdntID"] == s["DistStdntID"]))]
-        if other_prog_types:
-            for other_prog_stu in other_prog_types:
-                # (EndA <= StartB or StartA >= EndB)
-                if (student["ADMEndDtTxt"] <= other_prog_stu["ADMEnrlDtTxt"] or
-                        student["ADMEnrlDtTxt"] >= other_prog_stu["ADMEndDtTxt"]):
-                    print("Overlapping type 10 records found")
-                else:
-                    print("Overlapping type 10 records NOT found")
+    for type_10_student in type_10_list:
+        other_prog_types = [s for s in list_of_dicts_in if (s["ADMProgTypCd"] != 10)]
+        for other_prog_stu in other_prog_types:
+            # (EndA <= StartB or StartA >= EndB)
+            if (type_10_student["ADMEndDtTxt"] <= other_prog_stu["ADMEnrlDtTxt"] or
+                    type_10_student["ADMEnrlDtTxt"] >= other_prog_stu["ADMEndDtTxt"]):
+                print("Overlapping type 10 records found")
+                overlap_found = True
+    print("Overlapping type 10 records found == ", overlap_found)
 
 
 def validate_present_absent_days(list_of_dicts_in):
@@ -333,24 +332,14 @@ def compare_calcadm_school_counts(list_of_dicts_in):
     :param list_of_dicts_in:
     :return: no return value will print to stdout a comparison of the ADM amount and school attendance numbers
     """
-    type_1 = list(filter(lambda prog2_check: prog2_check['ADMProgTypCd'] == 1, list_of_dicts_in))
+    sorted_lst_by_school = sorted(list_of_dicts_in, key=itemgetter('AttndSchlInstID'))
+    for key, value in groupby(sorted_lst_by_school, key=itemgetter('AttndSchlInstID')):
+        rows = list(value)
+        print("School id: ", key, " Student count: ", sum(1 for r in rows), "sum cal ADM amount: ",
+              sum(r['CalcADMAmt'] for r in rows))
 
-    i = 0
-    while i < 5:
-        students_list = [student for student in type_1 if (student["ResdSchlInstID"] == 370 + i)]
-        # get a list of unique student numbers and convert to set to get number of students
-        stud_num_set_len = len(set([student["DistStdntID"] for student in students_list]))
-        print("school: " + str(370 + i) + " student count: " + str(stud_num_set_len))
-        i += 1
-
-    i = 0
-    while i < 5:
-        sum_adm_amt = 0
-        school_list = [student for student in list_of_dicts_in if (student["ResdSchlInstID"] == 370 + i)]
-        for r in school_list:
-            sum_adm_amt += r["CalcADMAmt"]
-        print("school: " + str(370 + i) + " all prog CalcADMAmt: " + str(sum_adm_amt))
-        i += 1
+    print("District Student count: ", len(list_of_dicts_in))
+    print("distrct sum cal ADM amount:  ", sum(row['CalcADMAmt'] for row in list_of_dicts_in ))
 
 
 def generate_sped_list(list_of_dicts_in):
@@ -365,28 +354,6 @@ def generate_sped_list(list_of_dicts_in):
     else:
         print("SpEd RECORDS NOT FOUND!!!!!!!")
     return sped_list
-
-
-# def find_no_dup_sped(list_of_dicts_in):
-#     # todo: remove this function - sped students only require one record on the adm
-#     """
-#     :param list_of_dicts_in:
-#     :return: list of SpEd students who have only 1 record in the ADM
-#     """
-#     sped_list = generate_sped_list(list_of_dicts_in)
-#     if sped_list:
-#         print("SpEd records found")
-#     else:
-#         print("SpEd RECORDS NOT FOUND!!!!!!!")
-#     no_dup = []
-#     for i in sped_list:
-#         count = 0
-#         for j in sped_list:
-#             if i["DistStdntID"] == j["DistStdntID"]:
-#                 count += 1
-#         if count == 1:
-#             no_dup.append(i)
-#     return no_dup
 
 
 def check_non_type2_dups(list_of_dicts_in):

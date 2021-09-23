@@ -16,8 +16,8 @@ def main():
     # print("\nChecking for duplicate records (excluding program type 2):")
     # adm.add_wsheet(adm.check_non_type2_dups(list_of_dicts), "duplicates_exclude_type2")
     #
-    print("\nChecking for SpEd Students:")
-    adm.add_wsheet(adm.generate_sped_list(list_of_dicts), "SpEd_students")
+    # print("\nChecking for SpEd Students:")
+    # adm.add_wsheet(adm.generate_sped_list(list_of_dicts), "SpEd_students")
     #
     # print("\nChecking for missing data:")
     # adm.add_wsheet(adm.find_all_missing_data(list_of_dicts), "records_missing_data")
@@ -53,9 +53,11 @@ def main():
     # adm.calculate_update_calcadmamt(list_of_dicts)
 
     # print("\nComparing student count to calculated ADM amount:")
-    # time.sleep(1)  # ensures adm amount has been writen to google sheet
     # list_of_dicts = adm.gen_list_of_dicts() # refresh list of dicts so that it contains CalcADMAmt
     # adm.compare_calcadm_school_counts(list_of_dicts)
+
+    print("\nChecking for overlapping type 10 enrollments")
+    adm.type_10_enrollment_validation(list_of_dicts)
 
 
 if __name__ == '__main__':
