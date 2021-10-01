@@ -5,9 +5,11 @@ import csv
 from itertools import groupby
 from operator import itemgetter
 from datetime import datetime as dt
+import pandas
 
-sheet_key = '1aHClb4Q_o6uaVuWB61OsZqDYjeK9s_jKeho1ofAAmAU'  # Annual ADM
+sheet_key = '1dLBFPtsdsfwY2QinCtDc6C8dR-fQzTJaO63QZqC1_DE'  # Annual ADM
 # authorize, and open a google spreadsheet
+# gc = gspread.service_account(filename='C:\\Users\\isaac.s\\Downloads\\credentials.json')
 gc = gspread.oauth()
 sh: Spreadsheet = gc.open_by_key(sheet_key)
 worksheet = sh.sheet1
@@ -30,7 +32,6 @@ def type_10_enrollment_validation(list_of_dicts_in):
             # (EndA <= StartB or StartA >= EndB)
             if (type_10_student["ADMEndDtTxt"] <= other_prog_stu["ADMEnrlDtTxt"] or
                     type_10_student["ADMEnrlDtTxt"] >= other_prog_stu["ADMEndDtTxt"]):
-                print("Overlapping type 10 records found")
                 overlap_found = True
     print("Overlapping type 10 records found == ", overlap_found)
 
@@ -175,7 +176,7 @@ def find_attendance_anomalies(list_of_dicts_in):
     ret_val = []
     for x in list_of_dicts_in:
         if x['ADMProgTypCd'] != 10:
-            if x['ADMSessDays'] != ((x['ADMPrsntDays'] + x['ADMAbsntDays']) / 10):
+            if x['ADMSessDays'] != (x['ADMPrsntDays'] + x['ADMAbsntDays']):
                 ret_val.append(x)
     if ret_val:
         print("Attendance anomalies found")
@@ -256,28 +257,23 @@ def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.
         print("add_wsheet: data_in is empty; will not attempt to add to worksheet")
     else:
         try:
+            dataframe = pandas.DataFrame(data_in)
             if data_in[0]:
                 headers = list(data_in[0].keys())
             else:
                 headers = list(data_in.keys())
             # +1 fixes bug when data_in has only one record
             sheet = sh.add_worksheet(sheet_name, len(data_in) + 1, len(headers))
-            sheet.append_row(headers)
-            last_cell = gspread.utils.rowcol_to_a1(len(data_in), len(headers))
-            cell_range = sheet.range('A2:' + last_cell)
-            flattened_test_data = []
-            for row in data_in:
-                for column in headers:
-                    flattened_test_data.append(row[column])
-            for i, cell in enumerate(cell_range):
-                cell.value = flattened_test_data[i]
-            sheet.update_cells(cell_range)
+            dataframe.fillna(0, inplace=True)
+            sheet.update([dataframe.columns.values.tolist()] + dataframe.values.tolist())
         except TypeError as e:
             print("Worksheet not created - no data", e)
         except IndexError as e:
             print("\nERROR in function: add_wsheet ", e)
         except gspread.exceptions.APIError as e:
             print("ERROR ADDING WORKSHEET: ", e)
+        except Exception as e:
+            print("Its borked : ", e)
 
 
 # check that records where ELFg = y, also have a program type 2 record
@@ -309,15 +305,19 @@ def calculate_update_calcadmamt(list_of_dicts_in):
     """
     student_amd_calc = []
     for student in list_of_dicts_in:
-        if ((student["ADMPrsntDays"] != 0 or
-             student["ADMAbsntDays"] != 0) and
-                student["ADMSessDays"] != 0 and
-                student["ADMFTE"] != 0 and
-                student["ADMInstrctHrs"] == 0):
-            student_amd_calc.append(
-                ((int(student["ADMPrsntDays"]) + int(student["ADMAbsntDays"])) / int(student["ADMSessDays"])) /
-                int(student["ADMFTE"]))
-        else:
+        try:
+            if ((student["ADMPrsntDays"] != 0 or
+                 student["ADMAbsntDays"] != 0) and
+                    student["ADMSessDays"] != 0 and
+                    student["ADMFTE"] != 0 and
+                    student["ADMInstrctHrs"] == 0):
+                student_amd_calc.append(
+                    ((int(student["ADMPrsntDays"]) + int(student["ADMAbsntDays"])) / int(student["ADMSessDays"])) /
+                    int(student["ADMFTE"]))
+            else:
+                student_amd_calc.append(0)
+        except ZeroDivisionError as e:
+            print('ZeroDivisionError: float division by zero')
             student_amd_calc.append(0)
     cell_list = worksheet.range('CC2:CC' + str(worksheet.row_count))
     for i, val in enumerate(student_amd_calc):
@@ -332,7 +332,9 @@ def compare_calcadm_school_counts(list_of_dicts_in):
     :param list_of_dicts_in:
     :return: no return value will print to stdout a comparison of the ADM amount and school attendance numbers
     """
-    sorted_lst_by_school = sorted(list_of_dicts_in, key=itemgetter('AttndSchlInstID'))
+    # filter out program type 2
+    filtered_list = [r for r in list_of_dicts_in if r['ADMProgTypCd'] != 2]
+    sorted_lst_by_school = sorted(filtered_list, key=itemgetter('AttndSchlInstID'))
     for key, value in groupby(sorted_lst_by_school, key=itemgetter('AttndSchlInstID')):
         rows = list(value)
         print("School id: ", key, " Student count: ", sum(1 for r in rows), "sum cal ADM amount: ",
