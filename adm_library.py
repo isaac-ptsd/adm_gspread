@@ -1,3 +1,5 @@
+import math
+
 import gspread
 from gspread import Spreadsheet
 from gspread import utils
@@ -180,6 +182,7 @@ def find_attendance_anomalies(list_of_dicts_in):
                 ret_val.append(x)
     if ret_val:
         print("Attendance anomalies found")
+        print(ret_val)
     else:
         print("Attendance anomalies not found!")
     return ret_val
@@ -258,13 +261,9 @@ def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.
     else:
         try:
             dataframe = pandas.DataFrame(data_in)
-            if data_in[0]:
-                headers = list(data_in[0].keys())
-            else:
-                headers = list(data_in.keys())
+            headers = dataframe.keys()
             # +1 fixes bug when data_in has only one record
-            sheet = sh.add_worksheet(sheet_name, len(data_in) + 1, len(headers))
-            dataframe.fillna(0, inplace=True)
+            sheet = sh.add_worksheet(sheet_name, len(data_in) + 2, len(headers))
             sheet.update([dataframe.columns.values.tolist()] + dataframe.values.tolist())
         except TypeError as e:
             print("Worksheet not created - no data", e)
@@ -273,7 +272,7 @@ def add_wsheet(data_in, sheet_name, email_in='isaac.stoutenburgh@phoenix.k12.or.
         except gspread.exceptions.APIError as e:
             print("ERROR ADDING WORKSHEET: ", e)
         except Exception as e:
-            print("Its borked : ", e)
+            print("Unexpected Exception Occurred: ", e)
 
 
 # check that records where ELFg = y, also have a program type 2 record
@@ -381,7 +380,15 @@ def check_non_type2_dups(list_of_dicts_in):
 
 def gen_list_of_dicts():
     # pulling all data from the spreadsheet with one API call
-    return worksheet.get_all_records()  # spreadsheet data saved as a list of dictionaries
+    wkst = worksheet.get_all_records()  # spreadsheet data saved as a list of dictionaries
+    # the value "Infinity" in a spreadsheet will be converted to math.inf when using worksheet.get_all_records()
+    # The below loop undoes this ridiculousness **Ask me how I found this fun little bug**
+    for dictionary in wkst:
+        for k, v in dictionary.items():
+            if v == math.inf:
+                dictionary[k] = 'Infinity'
+    ########
+    return wkst
 
 
 def check_for_no_att(list_of_dicts_in):
