@@ -1,10 +1,7 @@
 import adm_library as adm
-import gspread
-from gspread import Spreadsheet
-from gspread import utils
-import csv
-import time
-import pprint
+
+
+# todo: 0 days present with > 0 days absent
 
 
 def main():
@@ -46,18 +43,21 @@ def main():
     # print("\nChecking for records with enrolled date after end date:")
     # adm.add_wsheet(adm.enrolled_after_end(list_of_dicts), "End Date greater than or equal to Enroll Date")
     #
-    # print("Checking for missing implicit 0's")
-    # adm.add_wsheet(adm.validate_present_absent_days(list_of_dicts), "bad days")
-    #
-    # # print("\nCalculating ADM Amount:")
+    # print("\nCalculating ADM Amount:")
     # adm.calculate_update_calcadmamt(list_of_dicts)
-
+    #
     # print("\nComparing student count to calculated ADM amount:")
     # list_of_dicts = adm.gen_list_of_dicts() # refresh list of dicts so that it contains CalcADMAmt
     # adm.compare_calcadm_school_counts(list_of_dicts)
+    #
+    # print("\nChecking for overlapping type 10 enrollments")
+    # adm.type_10_enrollment_validation(list_of_dicts)
 
-    print("\nChecking for overlapping type 10 enrollments")
-    adm.type_10_enrollment_validation(list_of_dicts)
+    # print("\nChecking for program type 5 records")
+    # adm.add_wsheet(adm.program_5_check(list_of_dicts), "program_type_5_rec")
+
+    print("\nChecking for zero days present with days absent")
+    adm.add_wsheet(adm.zero_days_present_with_days_absent(list_of_dicts), "zero_days_present_with_days_absent")
 
 
 if __name__ == '__main__':

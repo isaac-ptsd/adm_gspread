@@ -16,10 +16,6 @@ gc = gspread.oauth()
 sh: Spreadsheet = gc.open_by_key(sheet_key)
 worksheet = sh.sheet1
 
-# TODO:
-#   -> check for transition students (school id = 376)
-#   Note: these students must be submitted with school id = 374
-
 
 def type_10_enrollment_validation(list_of_dicts_in):
     """
@@ -43,6 +39,7 @@ def validate_present_absent_days(list_of_dicts_in):
     :param list_of_dicts_in:
     :return:
     """
+    # PowerSchool no longer requires implicit 0's this function is now deprecated.
     list_bad_days = []
     for student in list_of_dicts_in:
         if student["ADMPrsntDays"] != '':
@@ -51,7 +48,6 @@ def validate_present_absent_days(list_of_dicts_in):
         if student["ADMAbsntDays"] != '':
             if int(student["ADMAbsntDays"]) % 10 != 0:
                 list_bad_days.append(student)
-
     if list_bad_days:
         print("Days present/absent missing implicit the 0 were found!")
     else:
@@ -139,8 +135,8 @@ def find_all_missing_data(list_of_dicts_in, column_list_to_check=["ChkDigitStdnt
              list of worksheet rows; one row of complete ADM data for each record missing data in the specified column
      """
     missing_val_list = []
-    for name in column_list_to_check:
-        missing_val_list += find_missing_data(list_of_dicts_in, name)
+    for column_name in column_list_to_check:
+        missing_val_list += find_missing_data(list_of_dicts_in, column_name)
     # remove duplicates from the returned list
     ret_val = [i for n, i in enumerate(missing_val_list) if i not in missing_val_list[n + 1:]]
     if ret_val:
@@ -148,6 +144,10 @@ def find_all_missing_data(list_of_dicts_in, column_list_to_check=["ChkDigitStdnt
     else:
         print("NO RECORDS MISSING DATA FOUND")
     return ret_val
+
+
+def highlight_missing_data():
+    print("todo")
 
 
 def to_csv(list_of_dicts_in, name_of_csv_to_create):
@@ -182,7 +182,6 @@ def find_attendance_anomalies(list_of_dicts_in):
                 ret_val.append(x)
     if ret_val:
         print("Attendance anomalies found")
-        print(ret_val)
     else:
         print("Attendance anomalies not found!")
     return ret_val
@@ -431,3 +430,22 @@ def enrolled_after_end(list_of_dicts_in):
     else:
         print("Records with enroll_dates >= end_dates not found")
     return list_bad_dates
+
+
+def program_5_check(list_of_dicts_in):
+    program_5_found = [r for r in list_of_dicts_in if r["ADMProgTypCd"] == 5]
+    if program_5_found:
+        print("Program type 5 records found")
+    else:
+        print("Program type 5 records not present")
+    return program_5_found
+
+
+# todo: 0 days present with > 0 days absent
+def zero_days_present_with_days_absent(list_of_dicts_in):
+    zero_days_present_with_days_absent_found = [r for r in list_of_dicts_in if r["ADMPrsntDays"] == 0 and r["ADMAbsntDays"] != 0]
+    if zero_days_present_with_days_absent_found:
+        print("Records with 0 days present AND > 0 days absent found")
+    else:
+        print("Records with 0 days present AND > 0 days absent NOT found")
+    return zero_days_present_with_days_absent_found
